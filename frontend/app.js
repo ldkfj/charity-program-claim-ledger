@@ -1,6 +1,7 @@
 import {
   CONTRACT_KEY,
   PENDING_KEY,
+  clearFinalizedFailure,
   isContractAddress,
   makePendingIntent,
   normalizeClaim,
@@ -204,7 +205,25 @@ async function reconcile(intent = pendingIntent()) {
   const outcome = receiptSucceeded(receipt);
   if (!outcome.finalized) throw new Error("Receipt is not explicitly FINALIZED.");
   if (!outcome.executionSucceeded) {
-    throw new Error(`Finalized transaction execution was ${outcome.execution || "not successful"}.`);
+    let intendedEffectExists = false;
+    try {
+      await authoritativeReadback(intent);
+      intendedEffectExists = true;
+    } catch (error) {
+      if (!(error instanceof PendingNotAppliedError)) throw error;
+    }
+    if (!clearFinalizedFailure(localStorage, receipt, true)) {
+      throw new Error("Finalized failure could not be reconciled safely.");
+    }
+    refreshPendingControl();
+    status(
+      writeStatus,
+      intendedEffectExists
+        ? `This transaction failed (${outcome.execution}), but authoritative state already matches the stored intent. The pending lock was cleared.`
+        : `Transaction execution failed (${outcome.execution || "unknown error"}). Authoritative readback confirms no effect; the pending lock was cleared for a deliberate retry.`,
+      "error",
+    );
+    return;
   }
   status(writeStatus, "Execution succeeded. Reading authoritative state…");
   const message = await authoritativeReadback(intent);

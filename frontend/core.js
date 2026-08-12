@@ -135,3 +135,10 @@ export function receiptSucceeded(receipt) {
     execution,
   };
 }
+
+export function clearFinalizedFailure(storage, receipt, readbackCompleted) {
+  const outcome = receiptSucceeded(receipt);
+  if (!outcome.finalized || outcome.executionSucceeded || !readbackCompleted) return false;
+  storage.removeItem(PENDING_KEY);
+  return true;
+}

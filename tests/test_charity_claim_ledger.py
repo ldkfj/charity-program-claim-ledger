@@ -131,6 +131,33 @@ def test_assessment_uses_rederived_numeric_facts_not_llm_verdict_or_math(ledger)
     assert "matches the bound filing" in claim["explanation"]
 
 
+@pytest.mark.parametrize("bad_number", [2**256, -1, True, "7"])
+def test_untrusted_numbers_outside_strict_u256_become_unresolved(ledger, bad_number):
+    claim_id = register(ledger)
+    payload = result_json(numerator=bad_number, denominator=1000)
+    FakeNondet.llm_results = [payload, payload]
+
+    ledger.assess_claim(claim_id)
+
+    claim = ledger.get_claim(claim_id)
+    assert claim["state"] == "UNRESOLVED"
+    assert claim["verdict"] == "UNRESOLVED"
+
+
+def test_named_program_scope_canonicalizes_unused_numbers_to_zero(ledger):
+    claim_id = register(ledger, template="NAMED_PROGRAM_SCOPE", bps=0)
+    payload = result_json(numerator=700, denominator=1000)
+    FakeNondet.llm_results = [payload, payload]
+
+    ledger.assess_claim(claim_id)
+
+    claim = ledger.get_claim(claim_id)
+    assert claim["state"] == "ASSESSED"
+    assert claim["numerator"] == 0
+    assert claim["denominator"] == 0
+    assert claim["calculated_bps"] == 0
+
+
 def test_validator_disagreement_leaves_frozen_state_unchanged(ledger):
     claim_id = register(ledger)
     FakeNondet.llm_results = [

@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  PENDING_KEY,
+  clearFinalizedFailure,
   isContractAddress,
   makePendingIntent,
   normalizeClaim,
@@ -122,4 +124,19 @@ test("receipt with missing status fails closed instead of assuming finality", ()
   const result = receiptSucceeded({ txExecutionResultName: "FINISHED_WITH_RETURN" });
   assert.equal(result.finalized, false);
   assert.equal(result.executionSucceeded, true);
+});
+
+test("finalized execution error releases pending only after authoritative readback", () => {
+  const storage = new Map([[PENDING_KEY, "pending"]]);
+  storage.removeItem = storage.delete.bind(storage);
+  const failed = { statusName: "FINALIZED", txExecutionResultName: "FINISHED_WITH_ERROR" };
+
+  assert.equal(clearFinalizedFailure(storage, failed, false), false);
+  assert.equal(storage.has(PENDING_KEY), true);
+  assert.equal(clearFinalizedFailure(storage, failed, true), true);
+  assert.equal(storage.has(PENDING_KEY), false);
+
+  storage.set(PENDING_KEY, "pending");
+  assert.equal(clearFinalizedFailure(storage, { ...failed, statusName: "ACCEPTED" }, true), false);
+  assert.equal(storage.has(PENDING_KEY), true);
 });

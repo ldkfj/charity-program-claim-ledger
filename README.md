@@ -77,7 +77,7 @@ $env:GENVM_VERSION='v0.3.0-rc7'
 genvm-lint check contracts/charity_claim_ledger.py --json
 ```
 
-Current local result: 22 contract behavior tests passed, 9 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. Live Studionet evidence is intentionally not claimed yet.
+Current local result: 27 contract behavior tests passed, 10 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. Live Studionet evidence is intentionally not claimed yet.
 
 ## Deployment
 

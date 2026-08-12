@@ -29,6 +29,7 @@ VALID_VERDICTS = (
     VERDICT_NOT_COMPARABLE,
     VERDICT_UNRESOLVED,
 )
+U256_MAX = (1 << 256) - 1
 
 
 @allow_storage
@@ -282,14 +283,18 @@ PROPUBLICA CROSS-CHECK JSON:
     ) -> dict:
         cleaned = raw.replace("```json", "").replace("```", "").strip()
         parsed = json.loads(cleaned)
+        numbers = {key: parsed.get(key, 0) for key in ("numerator", "denominator", "calculated_bps")}
+        if any(type(value) is not int or value < 0 or value > U256_MAX for value in numbers.values()):
+            return self._unresolved_result("The evidence extraction contained an invalid number")
+
         result = {
             "verdict": str(parsed.get("verdict", "")),
             "source_ein": str(parsed.get("source_ein", "")),
             "source_tax_period": str(parsed.get("source_tax_period", "")),
             "source_object_id": str(parsed.get("source_object_id", "")),
-            "numerator": int(parsed.get("numerator", 0)),
-            "denominator": int(parsed.get("denominator", 0)),
-            "calculated_bps": int(parsed.get("calculated_bps", 0)),
+            "numerator": numbers["numerator"],
+            "denominator": numbers["denominator"],
+            "calculated_bps": numbers["calculated_bps"],
             "explanation": "",
         }
         if result["source_ein"] == "" or result["source_tax_period"] == "" or result["source_object_id"] == "":
@@ -312,6 +317,10 @@ PROPUBLICA CROSS-CHECK JSON:
                 if result["denominator"] == 0
                 else result["numerator"] * 10000 // result["denominator"]
             )
+        else:
+            result["numerator"] = 0
+            result["denominator"] = 0
+            result["calculated_bps"] = 0
         result["explanation"] = self._explanation_for(result["verdict"], template)
         if not self._valid_result(result):
             return self._unresolved_result("The evidence extraction did not produce a valid assessment")
@@ -361,11 +370,11 @@ PROPUBLICA CROSS-CHECK JSON:
             return False
         if result["verdict"] not in VALID_VERDICTS:
             return False
-        if not isinstance(result["numerator"], int) or result["numerator"] < 0:
+        if type(result["numerator"]) is not int or not 0 <= result["numerator"] <= U256_MAX:
             return False
-        if not isinstance(result["denominator"], int) or result["denominator"] < 0:
+        if type(result["denominator"]) is not int or not 0 <= result["denominator"] <= U256_MAX:
             return False
-        if not isinstance(result["calculated_bps"], int) or result["calculated_bps"] < 0:
+        if type(result["calculated_bps"]) is not int or result["calculated_bps"] < 0:
             return False
         if result["calculated_bps"] > 10000:
             return False
