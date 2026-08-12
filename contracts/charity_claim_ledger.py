@@ -110,9 +110,11 @@ class CharityProgramClaimLedger(gl.Contract):
         if not all(char.isalnum() or char == "-" for char in client_intent_id):
             raise gl.vm.UserError("Client intent ID contains unsupported characters")
 
-    def _filing_url(self, ein: str, tax_period: str, object_id: str) -> str:
-        filename = ein + "_" + tax_period + "_990_" + object_id + ".pdf"
-        return "https://apps.irs.gov/pub/epostcard/cor/" + filename
+    def _filing_url(self, object_id: str) -> str:
+        return "https://projects.propublica.org/nonprofits/full_text/" + object_id + "/IRS990"
+
+    def _schedule_o_url(self, object_id: str) -> str:
+        return self._filing_url(object_id) + "ScheduleO"
 
     def _crosscheck_url(self, ein: str) -> str:
         return "https://projects.propublica.org/nonprofits/api/v2/organizations/" + ein + ".json"
@@ -153,7 +155,7 @@ class CharityProgramClaimLedger(gl.Contract):
             denominator=0,
             calculated_bps=0,
             explanation="",
-            filing_url=self._filing_url(ein, tax_period, object_id),
+            filing_url=self._filing_url(object_id),
             crosscheck_url=self._crosscheck_url(ein),
             retries=0,
             successor_id=0,
@@ -182,7 +184,33 @@ class CharityProgramClaimLedger(gl.Contract):
                     return self._unresolved_result("The filing cross-check could not be retrieved")
 
                 crosscheck = api_response.body.decode("utf-8")
-                filing_text = gl.nondet.web.render(filing_url, mode="text")
+                filing_response = gl.nondet.web.request(filing_url, method="GET")
+                if filing_response.status_code == 429 or filing_response.status_code >= 500:
+                    return self._unresolved_result("A bound evidence source was temporarily unavailable")
+                if filing_response.status_code < 200 or filing_response.status_code >= 300:
+                    return self._unresolved_result("The bound IRS filing could not be retrieved")
+                filing_html = filing_response.body.decode("utf-8")
+                identity = self._filing_identity(filing_html)
+                if identity is None:
+                    return self._unresolved_result("The bound filing identity could not be verified")
+                if identity[0] != ein or identity[1] != tax_period:
+                    return self._wrong_filing_result(identity[0], identity[1], object_id)
+                if not self._crosscheck_matches(crosscheck, ein, tax_period):
+                    return self._unresolved_result("The filing cross-check did not confirm the bound identity")
+
+                if template == TEMPLATE_PROGRAM or template == TEMPLATE_FUNDRAISING:
+                    return self._numeric_evidence_result(
+                        filing_html, ein, tax_period, object_id, template, claimed_bps
+                    )
+
+                schedule_response = gl.nondet.web.request(
+                    self._schedule_o_url(object_id), method="GET"
+                )
+                if schedule_response.status_code == 429 or schedule_response.status_code >= 500:
+                    return self._unresolved_result("A bound evidence source was temporarily unavailable")
+                schedule_html = ""
+                if 200 <= schedule_response.status_code < 300:
+                    schedule_html = schedule_response.body.decode("utf-8")
                 prompt = self._assessment_prompt(
                     ein,
                     tax_period,
@@ -190,7 +218,12 @@ class CharityProgramClaimLedger(gl.Contract):
                     template,
                     claim_text,
                     claimed_bps,
-                    filing_text,
+                    self._bounded_fragment(
+                        filing_html,
+                        "Statement of Program Service Accomplishments",
+                        "Part IV",
+                    ),
+                    self._schedule_o_explanations(schedule_html),
                     crosscheck,
                 )
                 raw = gl.nondet.exec_prompt(prompt)
@@ -223,6 +256,115 @@ class CharityProgramClaimLedger(gl.Contract):
 
         return gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
 
+    def _html_value(self, source: str, field_id: str) -> str:
+        marker = 'id="' + field_id + '">'
+        start = source.find(marker)
+        if start < 0:
+            return ""
+        start += len(marker)
+        end = source.find("</span>", start)
+        if end < 0 or "<" in source[start:end]:
+            return ""
+        return source[start:end].strip()
+
+    def _filing_identity(self, filing_html: str):
+        ein_path = "/AppData/SubmissionHeaderAndDocument/ReturnHeader[1]/Filer[1]/EIN[1]"
+        period_path = "/AppData/SubmissionHeaderAndDocument/ReturnHeader[1]/TaxPeriodEndDt[1]"
+        source_ein = self._html_value(filing_html, ein_path).replace("-", "")
+        period_end = self._html_value(filing_html, period_path)
+        if len(source_ein) != 9 or not source_ein.isdigit():
+            return None
+        if (
+            len(period_end) != 10
+            or period_end[2] != "-"
+            or period_end[5] != "-"
+            or not period_end.replace("-", "").isdigit()
+        ):
+            return None
+        source_period = period_end[6:10] + period_end[0:2]
+        if int(source_period[4:6]) < 1 or int(source_period[4:6]) > 12:
+            return None
+        return source_ein, source_period
+
+    def _crosscheck_matches(self, crosscheck: str, ein: str, tax_period: str) -> bool:
+        parsed = json.loads(crosscheck)
+        crosscheck_ein = str(parsed["organization"]["ein"]).zfill(9)
+        periods = tuple(str(item["tax_prd"]) for item in parsed["filings_with_data"])
+        return crosscheck_ein == ein and tax_period in periods
+
+    def _amount(self, filing_html: str, field: str):
+        path = (
+            "/AppData/SubmissionHeaderAndDocument/SubmissionDocument/IRS990[1]/"
+            "TotalFunctionalExpensesGrp[1]/" + field + "[1]"
+        )
+        value = self._html_value(filing_html, path).replace(",", "")
+        if value == "" or not value.isdigit():
+            return None
+        return int(value)
+
+    def _numeric_evidence_result(
+        self,
+        filing_html: str,
+        ein: str,
+        tax_period: str,
+        object_id: str,
+        template: str,
+        claimed_bps: int,
+    ) -> dict:
+        denominator = self._amount(filing_html, "TotalAmt")
+        field = "ProgramServicesAmt" if template == TEMPLATE_PROGRAM else "FundraisingAmt"
+        numerator = self._amount(filing_html, field)
+        if numerator is None or denominator is None:
+            return self._unresolved_result("The required Part IX values could not be extracted")
+        verdict = self._numeric_verdict(numerator, denominator, claimed_bps)
+        return {
+            "verdict": verdict,
+            "source_ein": ein,
+            "source_tax_period": tax_period,
+            "source_object_id": object_id,
+            "numerator": numerator,
+            "denominator": denominator,
+            "calculated_bps": 0 if denominator == 0 else numerator * 10000 // denominator,
+            "explanation": self._explanation_for(verdict, template),
+        }
+
+    def _wrong_filing_result(self, source_ein: str, source_period: str, object_id: str) -> dict:
+        return {
+            "verdict": VERDICT_WRONG_FILING,
+            "source_ein": source_ein,
+            "source_tax_period": source_period,
+            "source_object_id": object_id,
+            "numerator": 0,
+            "denominator": 0,
+            "calculated_bps": 0,
+            "explanation": self._explanation_for(VERDICT_WRONG_FILING, TEMPLATE_NAMED),
+        }
+
+    def _bounded_fragment(self, source: str, start_marker: str, end_marker: str) -> str:
+        start = source.find(start_marker)
+        if start < 0:
+            return ""
+        end = source.find(end_marker, start + len(start_marker))
+        if end < 0:
+            end = len(source)
+        return source[start:end][:20000]
+
+    def _schedule_o_explanations(self, source: str) -> str:
+        marker = "/ExplanationTxt[1]\">"
+        values = []
+        position = 0
+        while len("\n".join(values)) < 20000:
+            found = source.find(marker, position)
+            if found < 0:
+                break
+            start = found + len(marker)
+            end = source.find("</span>", start)
+            if end < 0:
+                break
+            values.append(source[start:end])
+            position = end + 7
+        return "\n".join(values)[:20000]
+
     def _assessment_prompt(
         self,
         ein: str,
@@ -232,6 +374,7 @@ class CharityProgramClaimLedger(gl.Contract):
         claim_text: str,
         claimed_bps: int,
         filing_text: str,
+        schedule_o_text: str,
         crosscheck: str,
     ) -> str:
         return f"""
@@ -247,7 +390,8 @@ Claimed basis points: {claimed_bps}
 Claim text: {claim_text}
 
 RULES
-- Cross-check the EIN, tax period, Object ID/PDF URL, and form type using both sources.
+- The contract already verified the EIN and tax period from the bound filing and cross-check.
+- The IRS Object ID is bound by the successful fixed full-text URL fetch.
 - If the sources identify another entity or period, use WRONG_PERIOD_OR_ENTITY.
 - PROGRAM_SERVICE_SHARE = Form 990 Part IX column B line 25 / column A line 25.
 - FUNDRAISING_SHARE = Form 990 Part IX column D line 25 / column A line 25.
@@ -268,6 +412,9 @@ Return only one JSON object with exactly these keys:
 
 IRS FILING TEXT:
 {filing_text}
+
+SCHEDULE O EXPLANATIONS (may be empty):
+{schedule_o_text}
 
 PROPUBLICA CROSS-CHECK JSON:
 {crosscheck}

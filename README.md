@@ -14,7 +14,7 @@ Donors and public-interest researchers can see a charity claim, but the claimant
 
 ## Why GenLayer is essential
 
-The decisive step requires reading an IRS Form 990 PDF and, for narrative claims, interpreting Part III and Schedule O in context. A GenLayer Intelligent Contract fetches the fixed IRS source plus a fixed ProPublica identity cross-check, uses an LLM to extract filing facts, and asks validators to rerun the complete evidence review independently. Deterministic contract code then calculates numeric ratios and applies the verdict thresholds before storing the consensus result on chain.
+The decisive step requires reading an IRS Form 990 and, for narrative claims, interpreting Part III and Schedule O in context. A GenLayer Intelligent Contract fetches the Object-ID-bound IRS filing rendering plus a fixed ProPublica identity cross-check. Numeric Part IX values are extracted deterministically; an LLM evaluates only bounded narrative evidence. Validators independently refetch and rederive the complete consequential result before it is stored on chain.
 
 ## How it works
 
@@ -30,7 +30,7 @@ The verdict is documentary. It is not a fraud finding, charity rating, endorseme
 - `contracts/charity_claim_ledger.py` is the source of truth for claims, lifecycle rules, evidence URLs, consensus, deterministic numeric evaluation, and intent-to-claim mapping.
 - `frontend/` is a dependency-light browser client for public reads and explicitly selected EIP-1193 wallets.
 - `tests/` contains contract behavior tests and frontend boundary tests.
-- IRS Form 990 is the primary evidence. ProPublica is an identity and filing-period cross-check, not a replacement source.
+- The IRS Form 990 content rendered by ProPublica is the primary evidence. ProPublica's organization API is the structured EIN and filing-period cross-check.
 
 There is no backend database and no off-chain authoritative claim state.
 
@@ -46,7 +46,7 @@ FROZEN -> UNRESOLVED -> ASSESSED | UNRESOLVED
 ASSESSED -> SUPERSEDED
 ```
 
-The supported templates are `PROGRAM_SERVICE_SHARE`, `FUNDRAISING_SHARE`, and `NAMED_PROGRAM_SCOPE`. Numeric templates use integer basis points. Validator equivalence compares the consequential extracted facts and normalized decision fields after each validator independently fetches and analyzes both fixed sources.
+The supported templates are `PROGRAM_SERVICE_SHARE`, `FUNDRAISING_SHARE`, and `NAMED_PROGRAM_SCOPE`. Numeric templates use integer basis points and deterministic Part IX extraction. Validator equivalence compares the consequential facts and normalized decision fields after each validator independently fetches and analyzes the fixed evidence.
 
 This project has no token, payout, staking, fee-sharing, or other economic value flow.
 
@@ -77,7 +77,7 @@ $env:GENVM_VERSION='v0.3.0-rc7'
 genvm-lint check contracts/charity_claim_ledger.py --json
 ```
 
-Current local result: 27 contract behavior tests passed, 10 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. Live Studionet evidence is intentionally not claimed yet.
+Current local result: 30 contract behavior tests passed, 10 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. Live Studionet evidence for the remediated revision is intentionally not claimed yet.
 
 ## Deployment
 
@@ -101,7 +101,7 @@ The contract is classified `UPGRADABLE`. Its constructor records the Studio depl
 
 ## Known limitations
 
-- The corrected IRS filename shape and matching ProPublica identity have passed a live HTTP probe; full GenVM rendering and assessment still require live Studionet proof.
+- The Object-ID-bound full-text route and matching organization identity passed live HTTP probes; the remediated exact revision still requires fresh Studionet deployment and assessment proof.
 - Filing layouts and narrative quality vary; unusable evidence resolves to `UNRESOLVED` rather than a guessed verdict.
 - The frontend depends on the deployed Studionet receipt shape and will fail closed if explicit finality or execution success is absent.
 - No accepted release contract, complete live proof matrix, or public app URL exists yet.

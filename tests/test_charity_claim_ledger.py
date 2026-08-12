@@ -46,8 +46,8 @@ def test_register_freezes_identifiers_and_constructs_evidence_urls(ledger):
     assert claim["state"] == "FROZEN"
     assert claim["registrant"] == "0x1111111111111111111111111111111111111111"
     assert claim["filing_url"] == (
-        "https://apps.irs.gov/pub/epostcard/cor/"
-        "123456789_202312_990_202441239349300001.pdf"
+        "https://projects.propublica.org/nonprofits/full_text/"
+        "202441239349300001/IRS990"
     )
     assert claim["crosscheck_url"].endswith("/organizations/123456789.json")
     assert ledger.get_claim_id_by_intent(claim["registrant"], "intent-202312-1234567890") == claim_id
@@ -118,10 +118,6 @@ def test_registration_rejects_replayed_client_intent(ledger):
 
 def test_assessment_uses_rederived_numeric_facts_not_llm_verdict_or_math(ledger):
     claim_id = register(ledger)
-    FakeNondet.llm_results = [
-        result_json(numerator=700, denominator=1000, verdict="OVERSTATED"),
-        result_json(numerator=700, denominator=1000, verdict="OVERSTATED"),
-    ]
 
     ledger.assess_claim(claim_id)
     claim = ledger.get_claim(claim_id)
@@ -134,7 +130,7 @@ def test_assessment_uses_rederived_numeric_facts_not_llm_verdict_or_math(ledger)
 
 @pytest.mark.parametrize("bad_number", [2**256, -1, True, "7"])
 def test_untrusted_numbers_outside_strict_u256_become_unresolved(ledger, bad_number):
-    claim_id = register(ledger)
+    claim_id = register(ledger, template="NAMED_PROGRAM_SCOPE", bps=0)
     payload = result_json(numerator=bad_number, denominator=1000)
     FakeNondet.llm_results = [payload, payload]
 
@@ -160,16 +156,46 @@ def test_named_program_scope_canonicalizes_unused_numbers_to_zero(ledger):
 
 
 def test_validator_disagreement_leaves_frozen_state_unchanged(ledger):
-    claim_id = register(ledger)
+    claim_id = register(ledger, template="NAMED_PROGRAM_SCOPE", bps=0)
     FakeNondet.llm_results = [
         result_json(numerator=700, denominator=1000),
-        result_json(numerator=800, denominator=1000),
+        result_json(numerator=800, denominator=1000, verdict="OVERSTATED"),
     ]
 
     with pytest.raises(RuntimeError, match="Validator disagreed"):
         ledger.assess_claim(claim_id)
 
     assert ledger.get_claim(claim_id)["state"] == "FROZEN"
+
+
+def test_missing_part_ix_values_becomes_unresolved(ledger):
+    claim_id = register(ledger)
+    FakeWeb.filing_body = b'''<span id="/AppData/SubmissionHeaderAndDocument/ReturnHeader[1]/Filer[1]/EIN[1]">12-3456789</span>
+<span id="/AppData/SubmissionHeaderAndDocument/ReturnHeader[1]/TaxPeriodEndDt[1]">12-31-2023</span>'''
+
+    ledger.assess_claim(claim_id)
+
+    assert ledger.get_claim(claim_id)["state"] == "UNRESOLVED"
+
+
+def test_filing_identity_mismatch_is_adverse_not_unresolved(ledger):
+    claim_id = register(ledger)
+    FakeWeb.filing_body = FakeWeb.filing_body.replace(b"12-3456789", b"98-7654321")
+
+    ledger.assess_claim(claim_id)
+
+    claim = ledger.get_claim(claim_id)
+    assert claim["state"] == "ASSESSED"
+    assert claim["verdict"] == "WRONG_PERIOD_OR_ENTITY"
+
+
+def test_malformed_filing_identity_fails_unresolved(ledger):
+    claim_id = register(ledger)
+    FakeWeb.filing_body = FakeWeb.filing_body.replace(b"12-3456789", b"missing")
+
+    ledger.assess_claim(claim_id)
+
+    assert ledger.get_claim(claim_id)["state"] == "UNRESOLVED"
 
 
 def test_rate_limit_becomes_unresolved_and_retry_is_bounded(ledger):

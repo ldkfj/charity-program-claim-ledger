@@ -96,14 +96,30 @@ class FakeRoot:
         return cls.state
 
 
+DEFAULT_FILING_BODY = b'''<span id="/AppData/SubmissionHeaderAndDocument/ReturnHeader[1]/Filer[1]/EIN[1]">12-3456789</span>
+<span id="/AppData/SubmissionHeaderAndDocument/ReturnHeader[1]/TaxPeriodEndDt[1]">12-31-2023</span>
+<span id="/AppData/SubmissionHeaderAndDocument/SubmissionDocument/IRS990[1]/TotalFunctionalExpensesGrp[1]/TotalAmt[1]">1,000</span>
+<span id="/AppData/SubmissionHeaderAndDocument/SubmissionDocument/IRS990[1]/TotalFunctionalExpensesGrp[1]/ProgramServicesAmt[1]">700</span>
+<span id="/AppData/SubmissionHeaderAndDocument/SubmissionDocument/IRS990[1]/TotalFunctionalExpensesGrp[1]/FundraisingAmt[1]">100</span>
+Statement of Program Service Accomplishments Program facts Part IV'''
+
+
 class FakeWeb:
     response_status = 200
-    response_body = b'{"organization":{"ein":"123456789"}}'
+    crosscheck_body = b'{"organization":{"ein":"123456789"},"filings_with_data":[{"tax_prd":202312}]}'
+    filing_body = DEFAULT_FILING_BODY
+    schedule_body = b'<span id="x/ExplanationTxt[1]">Schedule O facts</span>'
     rendered_text = "Form 990 filing text"
 
     @classmethod
-    def request(cls, _url, method="GET"):
-        return types.SimpleNamespace(status_code=cls.response_status, body=cls.response_body)
+    def request(cls, url, method="GET"):
+        if url.endswith("IRS990ScheduleO"):
+            body = cls.schedule_body
+        elif "/full_text/" in url:
+            body = cls.filing_body
+        else:
+            body = cls.crosscheck_body
+        return types.SimpleNamespace(status_code=cls.response_status, body=body)
 
     @classmethod
     def render(cls, _url, mode="text"):
@@ -172,7 +188,9 @@ def ledger(contract_module):
     contract.claim_ids_by_intent = TreeMap()
     contract.retry_claim_ids_by_intent = TreeMap()
     FakeWeb.response_status = 200
-    FakeWeb.response_body = b'{"organization":{"ein":"123456789"}}'
+    FakeWeb.crosscheck_body = b'{"organization":{"ein":"123456789"},"filings_with_data":[{"tax_prd":202312}]}'
+    FakeWeb.filing_body = DEFAULT_FILING_BODY
+    FakeWeb.schedule_body = b'<span id="x/ExplanationTxt[1]">Schedule O facts</span>'
     FakeWeb.rendered_text = "Form 990 filing text"
     FakeNondet.llm_results = []
     return contract
