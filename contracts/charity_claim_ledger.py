@@ -300,7 +300,8 @@ class CharityProgramClaimLedger(gl.Contract):
         value = self._html_value(filing_html, path).replace(",", "")
         if value == "" or not value.isdigit():
             return None
-        return int(value)
+        amount = int(value)
+        return None if amount > U256_MAX else amount
 
     def _numeric_evidence_result(
         self,
@@ -317,6 +318,7 @@ class CharityProgramClaimLedger(gl.Contract):
         if numerator is None or denominator is None:
             return self._unresolved_result("The required Part IX values could not be extracted")
         verdict = self._numeric_verdict(numerator, denominator, claimed_bps)
+        comparable = denominator > 0 and numerator <= denominator
         return {
             "verdict": verdict,
             "source_ein": ein,
@@ -324,7 +326,7 @@ class CharityProgramClaimLedger(gl.Contract):
             "source_object_id": object_id,
             "numerator": numerator,
             "denominator": denominator,
-            "calculated_bps": 0 if denominator == 0 else numerator * 10000 // denominator,
+            "calculated_bps": numerator * 10000 // denominator if comparable else 0,
             "explanation": self._explanation_for(verdict, template),
         }
 

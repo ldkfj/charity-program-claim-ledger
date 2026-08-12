@@ -198,6 +198,32 @@ def test_malformed_filing_identity_fails_unresolved(ledger):
     assert ledger.get_claim(claim_id)["state"] == "UNRESOLVED"
 
 
+def test_deterministic_part_ix_numerator_above_denominator_is_not_comparable(ledger):
+    claim_id = register(ledger)
+    FakeWeb.filing_body = FakeWeb.filing_body.replace(
+        b"ProgramServicesAmt[1]\">700", b"ProgramServicesAmt[1]\">1,100"
+    )
+
+    ledger.assess_claim(claim_id)
+
+    claim = ledger.get_claim(claim_id)
+    assert claim["state"] == "ASSESSED"
+    assert claim["verdict"] == "NOT_COMPARABLE"
+    assert claim["calculated_bps"] == 0
+
+
+def test_deterministic_part_ix_amount_above_u256_fails_unresolved(ledger):
+    claim_id = register(ledger)
+    FakeWeb.filing_body = FakeWeb.filing_body.replace(
+        b"ProgramServicesAmt[1]\">700",
+        b"ProgramServicesAmt[1]\">" + str(2**256).encode(),
+    )
+
+    ledger.assess_claim(claim_id)
+
+    assert ledger.get_claim(claim_id)["state"] == "UNRESOLVED"
+
+
 def test_rate_limit_becomes_unresolved_and_retry_is_bounded(ledger):
     claim_id = register(ledger)
     FakeWeb.response_status = 429
