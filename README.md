@@ -87,7 +87,7 @@ The release target is Studionet only:
 - Chain ID: `61999`
 - Explorer: `https://explorer-studio.genlayer.com`
 
-The contract is classified `UPGRADABLE`. Its constructor records the Studio deployment sender as the upgrader, and `upgrade` replaces the Root Slot code under GenVM's locked-slot authorization. Storage field order and types must remain compatible across upgrades. Deployment is gated on an exact-source anonymous review, recorded Studio deployer/upgrader account, source-hash capture, Explorer verification, live write-path evidence, a separate safe upgrade rehearsal, and frontend configuration with the real contract address. No deployment has been made for this revision.
+The contract is classified `UPGRADABLE`. Its constructor records the Studio deployment sender as the upgrader, and `upgrade` replaces the Root Slot code under GenVM's locked-slot authorization. Storage field order and types must remain compatible across upgrades. Deployment is gated on an exact-source anonymous review, recorded Studio deployer/upgrader account, source-hash capture, Explorer verification, live write-path evidence, a separate safe upgrade rehearsal, and frontend configuration with the real contract address. No release deployment has been accepted for this revision.
 
 ## Security and trust boundaries
 
@@ -101,7 +101,7 @@ The contract is classified `UPGRADABLE`. Its constructor records the Studio depl
 
 ## Known limitations
 
-- Current IRS PDF rendering and ProPublica access still require a live Studionet probe before deployment approval.
+- The corrected IRS filename shape and matching ProPublica identity have passed a live HTTP probe; full GenVM rendering and assessment still require live Studionet proof.
 - Filing layouts and narrative quality vary; unusable evidence resolves to `UNRESOLVED` rather than a guessed verdict.
 - The frontend depends on the deployed Studionet receipt shape and will fail closed if explicit finality or execution success is absent.
-- No live contract, Explorer transaction, deployed-source parity record, or public app URL exists yet.
+- No accepted release contract, complete live proof matrix, or public app URL exists yet.

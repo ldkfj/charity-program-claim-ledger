@@ -46,7 +46,8 @@ def test_register_freezes_identifiers_and_constructs_evidence_urls(ledger):
     assert claim["state"] == "FROZEN"
     assert claim["registrant"] == "0x1111111111111111111111111111111111111111"
     assert claim["filing_url"] == (
-        "https://apps.irs.gov/pub/epostcard/cor/202441239349300001.pdf"
+        "https://apps.irs.gov/pub/epostcard/cor/"
+        "123456789_202312_990_202441239349300001.pdf"
     )
     assert claim["crosscheck_url"].endswith("/organizations/123456789.json")
     assert ledger.get_claim_id_by_intent(claim["registrant"], "intent-202312-1234567890") == claim_id

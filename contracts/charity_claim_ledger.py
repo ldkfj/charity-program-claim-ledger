@@ -110,8 +110,9 @@ class CharityProgramClaimLedger(gl.Contract):
         if not all(char.isalnum() or char == "-" for char in client_intent_id):
             raise gl.vm.UserError("Client intent ID contains unsupported characters")
 
-    def _filing_url(self, object_id: str) -> str:
-        return "https://apps.irs.gov/pub/epostcard/cor/" + object_id + ".pdf"
+    def _filing_url(self, ein: str, tax_period: str, object_id: str) -> str:
+        filename = ein + "_" + tax_period + "_990_" + object_id + ".pdf"
+        return "https://apps.irs.gov/pub/epostcard/cor/" + filename
 
     def _crosscheck_url(self, ein: str) -> str:
         return "https://projects.propublica.org/nonprofits/api/v2/organizations/" + ein + ".json"
@@ -152,7 +153,7 @@ class CharityProgramClaimLedger(gl.Contract):
             denominator=0,
             calculated_bps=0,
             explanation="",
-            filing_url=self._filing_url(object_id),
+            filing_url=self._filing_url(ein, tax_period, object_id),
             crosscheck_url=self._crosscheck_url(ein),
             retries=0,
             successor_id=0,
