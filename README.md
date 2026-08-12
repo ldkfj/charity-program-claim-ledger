@@ -52,7 +52,7 @@ This project has no token, payout, staking, fee-sharing, or other economic value
 
 ## Transaction lifecycle
 
-The frontend never auto-selects an injected wallet. Before signing, it stores a client intent locally. After submission it waits for explicit `FINALIZED`, requires successful leader execution, and performs authoritative contract readback. Unknown submission state remains pending and blocks a blind retry. Registration readback resolves the exact claim ID from the registrant wallet plus `client_intent_id`; it never guesses from the global claim count.
+The frontend never auto-selects an injected wallet. Before signing, it stores a client intent locally. After submission it waits for explicit `FINALIZED`, requires successful leader execution, and performs authoritative contract readback. An unknown submission state remains pending: reconciliation checks authoritative state first and may resubmit only the exact stored action and arguments when no effect is found. Registration and retry are duplicate-safe through wallet-bound client intents; assessment is guarded by lifecycle state; and retry readback also compares the stored prior retry count. Registration never guesses an ID from the global claim count.
 
 ## Run locally
 
@@ -77,7 +77,7 @@ $env:GENVM_VERSION='v0.3.0-rc7'
 genvm-lint check contracts/charity_claim_ledger.py --json
 ```
 
-Current local result: 20 contract behavior tests passed, 7 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. Live Studionet evidence is intentionally not claimed yet.
+Current local result: 22 contract behavior tests passed, 9 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. Live Studionet evidence is intentionally not claimed yet.
 
 ## Deployment
 
