@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="A GenLayer ledger that compares frozen charity claims with exact IRS Form 990 filings."
+    />
+    <title>Charity Program Claim Ledger</title>
+    <link rel="stylesheet" href="/frontend/styles.css" />
+    <script type="module" src="/frontend/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to the claim workbench</a>
+
+    <header class="masthead">
+      <p class="issue-line">Public filing desk · Studionet · Chain 61999</p>
+      <h1>Charity Program Claim Ledger</h1>
+      <nav aria-label="Primary navigation">
+        <ul>
+          <li><a href="#lookup">Look up a claim</a></li>
+          <li><a href="#write-desk">Record or assess</a></li>
+          <li><a href="#method">Read the method</a></li>
+        </ul>
+      </nav>
+      <hr class="double-rule" aria-hidden="true" />
+      <p class="network-line" id="network-line">Public reads do not require a wallet.</p>
+    </header>
+
+    <main id="main">
+      <section class="lede" aria-labelledby="lede-title">
+        <div class="lede-copy">
+          <h2 id="lede-title">Read the filing behind the claim.</h2>
+        </div>
+        <div class="lede-copy">
+          <p>
+            Freeze a public charity statement against one EIN, one tax period, and one IRS
+            Object ID. GenLayer validators independently fetch the filing and agree on the
+            material facts before a verdict is stored.
+          </p>
+          <p>
+            This ledger does not rate charities, determine fraud, or move donations.
+            <strong>Unresolved means unavailable evidence—not an adverse finding.</strong>
+          </p>
+        </div>
+      </section>
+
+      <section class="workbench" id="lookup" aria-labelledby="lookup-title">
+        <div>
+          <div class="section-head">
+            <h2 id="lookup-title">Claim workbench</h2>
+            <p>Set the deployed contract once, then read any claim without connecting a wallet.</p>
+          </div>
+
+          <form class="contract-form" id="contract-form" novalidate>
+            <div class="field">
+              <label for="contract-address">Studionet contract address</label>
+              <input
+                id="contract-address"
+                name="contractAddress"
+                type="text"
+                inputmode="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="0x…"
+                aria-describedby="contract-address-note"
+              />
+              <p class="field-note" id="contract-address-note">
+                No placeholder address is used. Enter the real deployed address when available.
+              </p>
+            </div>
+            <button class="button" type="submit">Use this contract</button>
+          </form>
+        </div>
+
+        <div>
+          <form class="search-form" id="search-form" novalidate>
+            <div class="field">
+              <label for="claim-id">Claim ID</label>
+              <input
+                id="claim-id"
+                name="claimId"
+                type="text"
+                inputmode="numeric"
+                pattern="[1-9][0-9]*"
+                autocomplete="off"
+                placeholder="For example, 1"
+                aria-describedby="claim-id-note"
+              />
+              <p class="field-note" id="claim-id-note">Use a positive whole number.</p>
+            </div>
+            <div class="button-row">
+              <button class="button primary" id="lookup-button" type="submit">Read claim</button>
+              <button class="button" id="reconcile-button" type="button" hidden>
+                Reconcile pending write
+              </button>
+            </div>
+          </form>
+
+          <div class="status-box" id="read-status" role="status" aria-live="polite">
+            <p>Enter a deployed contract address and claim ID.</p>
+          </div>
+
+          <article class="claim-sheet" id="claim-sheet" aria-labelledby="claim-sheet-title" hidden>
+            <header>
+              <h3 id="claim-sheet-title">Claim <span id="claim-number"></span></h3>
+              <span class="verdict" id="claim-verdict"></span>
+            </header>
+            <p id="claim-text"></p>
+            <dl class="facts" id="claim-facts"></dl>
+            <p id="claim-explanation"></p>
+            <div class="source-links">
+              <a id="filing-link" target="_blank" rel="noreferrer">Open IRS filing</a>
+              <a id="crosscheck-link" target="_blank" rel="noreferrer">Open filing cross-check</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="write-desk" id="write-desk" aria-labelledby="write-title">
+        <div class="section-head">
+          <h2 id="write-title">Record or assess</h2>
+          <p>
+            Writes require an explicit wallet choice. A submitted write remains pending until it
+            is finalized, execution succeeds, and the resulting contract state is read back.
+          </p>
+          <div class="button-row">
+            <button class="button" id="wallet-button" type="button">Choose wallet</button>
+            <button class="button" id="disconnect-button" type="button" hidden>Disconnect</button>
+          </div>
+          <p class="field-note" id="wallet-status">No wallet selected.</p>
+        </div>
+
+        <div>
+          <details open>
+            <summary>Register a frozen claim</summary>
+            <div class="write-panel">
+              <form class="write-form" id="register-form" novalidate>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="ein">EIN</label>
+                    <input id="ein" name="ein" inputmode="numeric" autocomplete="off" placeholder="123456789" />
+                    <p class="field-note">Exactly 9 digits, without punctuation.</p>
+                  </div>
+                  <div class="field">
+                    <label for="tax-period">Tax period</label>
+                    <input id="tax-period" name="taxPeriod" inputmode="numeric" autocomplete="off" placeholder="202312" />
+                    <p class="field-note">Six digits in YYYYMM form.</p>
+                  </div>
+                  <div class="field">
+                    <label for="object-id">IRS Object ID</label>
+                    <input id="object-id" name="objectId" inputmode="numeric" autocomplete="off" placeholder="Digits from the IRS index" />
+                    <p class="field-note">The contract constructs the official PDF URL.</p>
+                  </div>
+                  <div class="field">
+                    <label for="template">Assessment template</label>
+                    <select id="template" name="template">
+                      <option value="PROGRAM_SERVICE_SHARE">Program-service share</option>
+                      <option value="FUNDRAISING_SHARE">Fundraising share</option>
+                      <option value="NAMED_PROGRAM_SCOPE">Named-program scope</option>
+                    </select>
+                    <p class="field-note">The denominator and evidence fields are fixed by template.</p>
+                  </div>
+                  <div class="field" id="bps-field">
+                    <label for="claimed-bps">Claimed share, basis points</label>
+                    <input id="claimed-bps" name="claimedBps" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="7000" />
+                    <p class="field-note">7000 means 70.00%. Named-program scope must use 0.</p>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="claim-copy">Exact public claim</label>
+                  <textarea id="claim-copy" name="claimText" minlength="12" maxlength="600" placeholder="Paste the exact claim to freeze…"></textarea>
+                  <p class="field-note">12–600 characters. Source text is treated as untrusted evidence.</p>
+                </div>
+                <button class="button primary" type="submit">Register claim</button>
+              </form>
+            </div>
+          </details>
+
+          <details>
+            <summary>Assess or retry a claim</summary>
+            <div class="write-panel">
+              <form class="compact-form" id="assess-form" novalidate>
+                <div class="field">
+                  <label for="assess-claim-id">Claim ID</label>
+                  <input id="assess-claim-id" name="claimId" inputmode="numeric" autocomplete="off" placeholder="1" />
+                  <p class="field-note">Retry is available only after authoritative readback shows UNRESOLVED.</p>
+                </div>
+                <div class="button-row">
+                  <button class="button primary" name="action" value="assess" type="submit">Assess claim</button>
+                  <button class="button" name="action" value="retry" type="submit">Retry unresolved</button>
+                </div>
+              </form>
+            </div>
+          </details>
+
+          <details>
+            <summary>Link a newer assessed claim</summary>
+            <div class="write-panel">
+              <form class="compact-form" id="successor-form" novalidate>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="old-claim-id">Older claim ID</label>
+                    <input id="old-claim-id" name="oldId" inputmode="numeric" autocomplete="off" placeholder="1" />
+                    <p class="field-note">Must currently be assessed.</p>
+                  </div>
+                  <div class="field">
+                    <label for="new-claim-id">Newer claim ID</label>
+                    <input id="new-claim-id" name="newId" inputmode="numeric" autocomplete="off" placeholder="2" />
+                    <p class="field-note">Same EIN and template, newer tax period.</p>
+                  </div>
+                </div>
+                <button class="button primary" type="submit">Link successor</button>
+              </form>
+            </div>
+          </details>
+
+          <div class="status-box" id="write-status" role="status" aria-live="polite">
+            <p>No write in progress.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="method" aria-labelledby="method-title">
+        <div class="section-head">
+          <h2 id="method-title">What the verdict means</h2>
+          <p>Every result is bounded to the selected filing and template.</p>
+        </div>
+        <dl class="facts">
+          <div><dt>SUPPORTED_BY_FILING</dt><dd>The filing supports the frozen claim within the template’s exact rule.</dd></div>
+          <div><dt>QUALIFICATION_REQUIRED</dt><dd>The claim needs a material scope or numeric qualification.</dd></div>
+          <div><dt>OVERSTATED</dt><dd>The claim states more than the selected filing supports.</dd></div>
+          <div><dt>WRONG_PERIOD_OR_ENTITY</dt><dd>The fetched evidence does not match the frozen filing identity.</dd></div>
+          <div><dt>NOT_COMPARABLE</dt><dd>The filing does not contain a usable denominator or comparable program description.</dd></div>
+          <div><dt>UNRESOLVED</dt><dd>Evidence was unavailable or validators could not derive a stable result. It is not an adverse finding.</dd></div>
+        </dl>
+      </section>
+    </main>
+
+    <footer class="colophon">
+      <p>
+        Charity Program Claim Ledger · Studionet only · IRS filing as primary evidence ·
+        ProPublica Nonprofit Explorer as independent structured cross-check · non-economic prototype ·
+        no charity rating, fraud finding, donation custody, or legal conclusion.
+      </p>
+    </footer>
+
+    <dialog id="wallet-dialog" aria-labelledby="wallet-dialog-title">
+      <h2 id="wallet-dialog-title">Choose a wallet provider</h2>
+      <p>Select the provider that may request access. Nothing is connected automatically.</p>
+      <div class="provider-list" id="provider-list"></div>
+      <div class="button-row">
+        <button class="button" id="wallet-cancel" type="button">Cancel</button>
+      </div>
+    </dialog>
+  </body>
+</html>

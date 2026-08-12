@@ -1,0 +1,10 @@
+{
+  "name": "charity-program-claim-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:frontend": "node --test tests/frontend_core.test.mjs",
+    "serve": "python -m http.server 4173"
+  }
+}
