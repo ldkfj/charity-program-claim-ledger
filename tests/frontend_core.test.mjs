@@ -60,6 +60,38 @@ test("pending intent round-trips bigint args without losing identity", () => {
   assert.equal(parsed.txHash, null);
 });
 
+test("pending retry intent preserves the authoritative retry baseline", () => {
+  const intent = makePendingIntent({
+    contractAddress: ADDRESS,
+    action: "retry_assessment",
+    args: [7n, "retry-intent-1234567890"],
+    expected: { previousRetries: 1n, clientIntentId: "retry-intent-1234567890" },
+  });
+  const parsed = parsePendingIntent(JSON.stringify(intent));
+  assert.equal(parsed.expected.previousRetries, "1");
+  assert.equal(parsed.args[0], "7");
+});
+
+test("pending intent rejects unapproved methods and malformed recovery metadata", () => {
+  const base = makePendingIntent({
+    contractAddress: ADDRESS,
+    action: "assess_claim",
+    args: [7n],
+    expected: {},
+  });
+  assert.throws(
+    () => parsePendingIntent(JSON.stringify({ ...base, action: "upgrade" })),
+    /invalid/,
+  );
+  const retry = {
+    ...base,
+    action: "retry_assessment",
+    args: ["7", "retry-intent-1234567890"],
+    expected: { previousRetries: "9", clientIntentId: "retry-intent-1234567890" },
+  };
+  assert.throws(() => parsePendingIntent(JSON.stringify(retry)), /retry baseline/);
+});
+
 test("receipt requires successful finalized execution", () => {
   assert.deepEqual(
     receiptSucceeded({ statusName: "FINALIZED", txExecutionResultName: "FINISHED_WITH_RETURN" }),

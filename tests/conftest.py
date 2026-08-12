@@ -170,6 +170,7 @@ def ledger(contract_module):
     contract = contract_module.CharityProgramClaimLedger()
     contract.claims = TreeMap()
     contract.claim_ids_by_intent = TreeMap()
+    contract.retry_claim_ids_by_intent = TreeMap()
     FakeWeb.response_status = 200
     FakeWeb.response_body = b'{"organization":{"ein":"123456789"}}'
     FakeWeb.rendered_text = "Form 990 filing text"

@@ -59,6 +59,7 @@ class CharityProgramClaimLedger(gl.Contract):
     claims: TreeMap[u256, Claim]
     claim_ids_by_intent: TreeMap[Address, TreeMap[str, u256]]
     claim_count: u256
+    retry_claim_ids_by_intent: TreeMap[Address, TreeMap[str, u256]]
 
     def __init__(self):
         self.claim_count = 0
@@ -399,12 +400,21 @@ PROPUBLICA CROSS-CHECK JSON:
         self._store_assessment(claim, result)
 
     @gl.public.write
-    def retry_assessment(self, claim_id: u256) -> None:
+    def retry_assessment(self, claim_id: u256, client_intent_id: str) -> None:
+        self._validate_intent_id(client_intent_id)
+        sender_intents = self.retry_claim_ids_by_intent.get_or_insert_default(
+            gl.message.sender_address
+        )
+        if client_intent_id in sender_intents:
+            if sender_intents[client_intent_id] != claim_id:
+                raise gl.vm.UserError("Retry intent was already used for another claim")
+            return
         claim = self._require_claim(claim_id)
         if claim.state != STATE_UNRESOLVED:
             raise gl.vm.UserError("Only an unresolved claim can be retried")
         if claim.retries >= 2:
             raise gl.vm.UserError("Retry limit reached")
+        sender_intents[client_intent_id] = claim_id
         claim.retries += 1
         result = self._evaluate(claim)
         self._store_assessment(claim, result)
@@ -415,6 +425,8 @@ PROPUBLICA CROSS-CHECK JSON:
             raise gl.vm.UserError("A claim cannot supersede itself")
         old_claim = self._require_claim(old_id)
         new_claim = self._require_claim(new_id)
+        if gl.message.sender_address != old_claim.registrant:
+            raise gl.vm.UserError("Only the original registrant can link a successor")
         if old_claim.state != STATE_ASSESSED or new_claim.state != STATE_ASSESSED:
             raise gl.vm.UserError("Both claims must be assessed")
         if old_claim.ein != new_claim.ein or old_claim.template != new_claim.template:

@@ -66,12 +66,20 @@ export function normalizeClaim(raw) {
 }
 
 export function makePendingIntent({ contractAddress, action, args, expected }) {
+  const jsonSafe = (value) => {
+    if (typeof value === "bigint") return value.toString();
+    if (Array.isArray(value)) return value.map(jsonSafe);
+    if (value && typeof value === "object") {
+      return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, jsonSafe(item)]));
+    }
+    return value;
+  };
   return {
     version: 1,
     contractAddress,
     action,
-    args: args.map((value) => (typeof value === "bigint" ? value.toString() : value)),
-    expected,
+    args: jsonSafe(args),
+    expected: jsonSafe(expected),
     txHash: null,
     createdAt: new Date().toISOString(),
   };
@@ -80,14 +88,38 @@ export function makePendingIntent({ contractAddress, action, args, expected }) {
 export function parsePendingIntent(serialized) {
   if (!serialized) return null;
   const value = JSON.parse(serialized);
+  const arity = {
+    register_claim: 7,
+    assess_claim: 1,
+    retry_assessment: 2,
+    link_successor: 2,
+  };
   if (
     value?.version !== 1 ||
     !isContractAddress(value.contractAddress) ||
-    typeof value.action !== "string" ||
+    !Object.hasOwn(arity, value.action) ||
     !Array.isArray(value.args) ||
+    value.args.length !== arity[value.action] ||
+    !value.expected ||
+    typeof value.expected !== "object" ||
+    (value.txHash !== null && (typeof value.txHash !== "string" || value.txHash.length < 3)) ||
     typeof value.createdAt !== "string"
   ) {
     throw new Error("The saved pending-write record is invalid.");
+  }
+  if (
+    value.action === "register_claim" &&
+    (!isContractAddress(value.expected.registrant) ||
+      value.expected.clientIntentId !== value.args[6])
+  ) {
+    throw new Error("The saved registration intent is invalid.");
+  }
+  if (
+    value.action === "retry_assessment" &&
+    (!/^[0-2]$/.test(String(value.expected.previousRetries)) ||
+      value.expected.clientIntentId !== value.args[1])
+  ) {
+    throw new Error("The saved retry baseline is invalid.");
   }
   return value;
 }

@@ -30,6 +30,8 @@ let selectedProvider = null;
 let selectedAccount = null;
 let writeClient = null;
 
+class PendingNotAppliedError extends Error {}
+
 function status(element, message, tone = "neutral") {
   element.dataset.tone = tone;
   element.replaceChildren(Object.assign(document.createElement("p"), { textContent: message }));
@@ -128,7 +130,7 @@ async function authoritativeReadback(intent) {
     const claimId = BigInt(
       await readClaimIdByIntent(address, intent.expected.registrant, intent.expected.clientIntentId),
     );
-    if (claimId <= 0n) throw new Error("Finalized receipt has no claim bound to this client intent.");
+    if (claimId <= 0n) throw new PendingNotAppliedError("No claim is bound to this client intent yet.");
     const claim = normalizeClaim(await readClaim(address, claimId));
     if (
       claim.state !== "FROZEN" ||
@@ -146,23 +148,56 @@ async function authoritativeReadback(intent) {
   const claim = normalizeClaim(await readClaim(address, primaryId));
   renderClaim(claim);
   if (intent.action === "assess_claim" && !["ASSESSED", "UNRESOLVED"].includes(claim.state)) {
-    throw new Error("Assessment receipt finalized but claim state did not advance.");
+    throw new PendingNotAppliedError("Assessment has not advanced the claim yet.");
   }
-  if (intent.action === "retry_assessment" && !["ASSESSED", "UNRESOLVED"].includes(claim.state)) {
-    throw new Error("Retry receipt finalized but claim state is not authoritative.");
+  if (intent.action === "retry_assessment") {
+    const previousRetries = BigInt(intent.expected.previousRetries);
+    if (claim.state === "UNRESOLVED" && BigInt(claim.retries) <= previousRetries) {
+      throw new PendingNotAppliedError("Retry has not advanced the claim yet.");
+    }
+    if (!["ASSESSED", "UNRESOLVED"].includes(claim.state)) {
+      throw new Error("Retry receipt finalized but claim state is not authoritative.");
+    }
   }
   if (intent.action === "link_successor") {
     if (claim.state !== "SUPERSEDED" || BigInt(claim.successor_id) !== BigInt(intent.args[1])) {
-      throw new Error("Successor link readback does not match the submitted intent.");
+      throw new PendingNotAppliedError("Successor link has not advanced the claim yet.");
     }
   }
   return `Transaction finalized; claim #${primaryId} readback is ${claim.state}.`;
 }
 
 async function reconcile(intent = pendingIntent()) {
-  if (!intent || intent.invalid) return;
+  if (!intent) return;
+  if (intent.invalid) {
+    localStorage.removeItem(PENDING_KEY);
+    refreshPendingControl();
+    status(writeStatus, "The invalid local pending record was discarded. Contract state was not changed.");
+    return;
+  }
   if (!intent.txHash) {
-    throw new Error("No transaction hash is available. Inspect the wallet activity before any retry.");
+    try {
+      const message = await authoritativeReadback(intent);
+      localStorage.removeItem(PENDING_KEY);
+      refreshPendingControl();
+      status(writeStatus, message, "success");
+      return;
+    } catch (error) {
+      if (!(error instanceof PendingNotAppliedError)) throw error;
+    }
+    if (!writeClient || !selectedAccount) {
+      throw new Error("Choose the same wallet provider to safely resume this stored intent.");
+    }
+    if (
+      intent.action === "register_claim" &&
+      intent.expected.registrant.toLowerCase() !== selectedAccount.toLowerCase()
+    ) {
+      throw new Error("Choose the original registration wallet before resuming this intent.");
+    }
+    status(writeStatus, "No authoritative effect was found. Resubmitting the same stored intent…");
+    intent.txHash = await submitWrite(writeClient, intent.contractAddress, intent.action, intent.args);
+    localStorage.setItem(PENDING_KEY, JSON.stringify(intent));
+    refreshPendingControl();
   }
   status(writeStatus, "Waiting for FINALIZED consensus…");
   const receipt = await waitFinalized(intent.txHash);
@@ -338,7 +373,14 @@ byId("assess-form").addEventListener("submit", async (event) => {
     if (action === "retry_assessment" && current.state !== "UNRESOLVED") {
       throw new Error("Authoritative readback must show UNRESOLVED before retry.");
     }
-    await executeWrite(action, [claimId]);
+    const retryIntentId = action === "retry_assessment" ? crypto.randomUUID() : null;
+    await executeWrite(
+      action,
+      action === "retry_assessment" ? [claimId, retryIntentId] : [claimId],
+      action === "retry_assessment"
+        ? { previousRetries: current.retries, clientIntentId: retryIntentId }
+        : {},
+    );
   } catch (error) {
     status(writeStatus, error.message, "error");
   } finally {

@@ -151,10 +151,21 @@ def test_rate_limit_becomes_unresolved_and_retry_is_bounded(ledger):
     ledger.assess_claim(claim_id)
     assert ledger.get_claim(claim_id)["state"] == "UNRESOLVED"
 
-    ledger.retry_assessment(claim_id)
-    ledger.retry_assessment(claim_id)
+    ledger.retry_assessment(claim_id, "retry-intent-one-123456")
+    ledger.retry_assessment(claim_id, "retry-intent-two-123456")
     with pytest.raises(Exception, match="Retry limit"):
-        ledger.retry_assessment(claim_id)
+        ledger.retry_assessment(claim_id, "retry-intent-three-1234")
+
+
+def test_retry_replay_with_same_intent_is_idempotent(ledger):
+    claim_id = register(ledger)
+    FakeWeb.response_status = 429
+    ledger.assess_claim(claim_id)
+
+    ledger.retry_assessment(claim_id, "retry-idempotent-123456")
+    ledger.retry_assessment(claim_id, "retry-idempotent-123456")
+
+    assert ledger.get_claim(claim_id)["retries"] == 1
 
 
 def test_successor_requires_same_ein_template_and_newer_assessed_period(ledger):
@@ -168,3 +179,16 @@ def test_successor_requires_same_ein_template_and_newer_assessed_period(ledger):
     old = ledger.get_claim(old_id)
     assert old["state"] == "SUPERSEDED"
     assert old["successor_id"] == new_id
+
+
+def test_only_original_registrant_can_link_successor(ledger):
+    old_id = register(ledger, period="202212")
+    new_id = register(ledger, period="202312")
+    for claim_id in (old_id, new_id):
+        ledger.claims[claim_id].state = "ASSESSED"
+
+    MESSAGE.sender_address = Address("0x2222222222222222222222222222222222222222")
+    with pytest.raises(Exception, match="original registrant"):
+        ledger.link_successor(old_id, new_id)
+
+    assert ledger.get_claim(old_id)["state"] == "ASSESSED"
