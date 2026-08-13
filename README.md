@@ -4,8 +4,9 @@ Charity Program Claim Ledger freezes a public charity claim and records how the 
 
 ## Verified links
 
-- Live app: pending Studionet deployment
-- Studionet contract and Explorer: pending deployment
+- Live app: pending public hosting
+- Studionet contract: `0x07Bca9edBCBEA28A4A3452126832cf5CE7962452`
+- Explorer: https://explorer-studio.genlayer.com/address/0x07Bca9edBCBEA28A4A3452126832cf5CE7962452
 - Network target: Studionet, chain ID `61999`
 
 ## Trust problem
@@ -62,7 +63,7 @@ Prerequisites already used for this revision are Node.js 22, Python 3.13, and an
 npm run serve
 ```
 
-Open `http://localhost:4173/frontend/`, enter a real deployed Studionet contract address, and use public lookup or explicitly choose a wallet for writes. The app intentionally ships without a placeholder contract address or `.env` requirement.
+Open `http://localhost:4173/frontend/` and use public lookup or explicitly choose a wallet for writes. The verified release address is preloaded; no `.env` file is required.
 
 ## Tests and verification
 
@@ -77,7 +78,7 @@ $env:GENVM_VERSION='v0.3.0-rc7'
 genvm-lint check contracts/charity_claim_ledger.py --json
 ```
 
-Current local result: 32 contract behavior tests passed, 10 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. Live Studionet evidence for the remediated revision is intentionally not claimed yet.
+Current local result: 32 contract behavior tests passed, 10 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The remediated source is deployed with byte-for-byte parity; the post-deployment write matrix remains in progress.
 
 ## Deployment
 
@@ -87,7 +88,7 @@ The release target is Studionet only:
 - Chain ID: `61999`
 - Explorer: `https://explorer-studio.genlayer.com`
 
-The contract is classified `UPGRADABLE`. Its constructor records the Studio deployment sender as the upgrader, and `upgrade` replaces the Root Slot code under GenVM's locked-slot authorization. Storage field order and types must remain compatible across upgrades. Deployment is gated on an exact-source anonymous review, recorded Studio deployer/upgrader account, source-hash capture, Explorer verification, live write-path evidence, a separate safe upgrade rehearsal, and frontend configuration with the real contract address. No release deployment has been accepted for this revision.
+The contract is classified `UPGRADABLE`. Its constructor records the Studio deployment sender as the upgrader, and `upgrade` replaces the Root Slot code under GenVM's locked-slot authorization. Storage field order and types must remain compatible across upgrades. Exact-source PRE_DEPLOY review approved commit `56a93a329403ac6ad94770380a1c1e6acbf68588`; transaction `0x7404ddc25320ec5f2c6927f4fae59ea9abfe0dcfdfb22eef4364061a6bbe3dc1` deployed the reviewed source to `0x07Bca9edBCBEA28A4A3452126832cf5CE7962452`. Explorer readback shows `FINALIZED`, leader `SUCCESS`, 5/5 agreeing votes, and deployed source parity at 26,893 bytes / SHA-256 `df1636384d1037575c4eec9d9d902fdc4db528d212bb5109958339806efecc24`.
 
 ## Security and trust boundaries
 
@@ -101,7 +102,7 @@ The contract is classified `UPGRADABLE`. Its constructor records the Studio depl
 
 ## Known limitations
 
-- The Object-ID-bound full-text route and matching organization identity passed live HTTP probes; the remediated exact revision still requires fresh Studionet deployment and assessment proof.
+- The Object-ID-bound full-text route and matching organization identity passed live HTTP probes; the remediated deployment still requires the complete Studionet write/readback matrix and POST_DEPLOY_TEST approval.
 - Filing layouts and narrative quality vary; unusable evidence resolves to `UNRESOLVED` rather than a guessed verdict.
 - The frontend depends on the deployed Studionet receipt shape and will fail closed if explicit finality or execution success is absent.
-- No accepted release contract, complete live proof matrix, or public app URL exists yet.
+- The accepted release contract exists, but the complete live proof matrix and public app URL do not exist yet.

@@ -1,6 +1,7 @@
 import {
   CONTRACT_KEY,
   PENDING_KEY,
+  RELEASE_CONTRACT_ADDRESS,
   clearFinalizedFailure,
   isContractAddress,
   makePendingIntent,
@@ -441,5 +442,7 @@ byId("template").addEventListener("change", (event) => {
 });
 
 const savedAddress = localStorage.getItem(CONTRACT_KEY);
-if (savedAddress && isContractAddress(savedAddress)) contractInput.value = savedAddress;
+contractInput.value = savedAddress && isContractAddress(savedAddress)
+  ? savedAddress
+  : RELEASE_CONTRACT_ADDRESS;
 refreshPendingControl();

@@ -13,10 +13,21 @@
 - Constructor arguments: none
 - Linked contracts: none
 - Configuration transactions: none
-- Contract source SHA-256: recorded in the exact PRE_DEPLOY review package
-- Deployment address and transaction: recorded only after accepted deployment
+- Contract source SHA-256: `df1636384d1037575c4eec9d9d902fdc4db528d212bb5109958339806efecc24`
+- Source bytes: `26893`
+- Exact reviewed commit: `56a93a329403ac6ad94770380a1c1e6acbf68588`
+- Selected deployer/upgrader: `0x09Cdd3BeE61e0080cBD00ad61Bc1b44D3f1F289a`
+- Deployment transaction: `0x7404ddc25320ec5f2c6927f4fae59ea9abfe0dcfdfb22eef4364061a6bbe3dc1`
+- Release contract: `0x07Bca9edBCBEA28A4A3452126832cf5CE7962452`
+- Explorer: https://explorer-studio.genlayer.com/address/0x07Bca9edBCBEA28A4A3452126832cf5CE7962452
 
-The primary AI will select a fresh available Studio account after anonymous `PRE_DEPLOY` approval, record its public address here before sending any transaction, and use that same address as deployer and Root Slot upgrader. No account, credential, contract address, or deployment evidence from another Task may be reused.
+The primary AI selected the Task-local Studio account above after anonymous `PRE_DEPLOY` approval and used it as deployer and Root Slot upgrader. No account, credential, contract address, or deployment evidence from another Task was reused.
+
+## Accepted deployment evidence
+
+The fresh deployment transaction is `FINALIZED`; the leader execution is `SUCCESS`; all five recorded validator votes agree; and `from_address` equals the selected deployer. Explorer contract-code readback decodes to exactly 26,893 bytes and the approved SHA-256 above. The earlier addresses `0x05FCf32aCa5265D733D4524D4346fDF4277fE100`, `0x18e78e546dEB4ABb28D7B4f306D056E860CE32b6`, and `0x33297B6C682B4FcE63bd0d26fd6842B79FB8a07B` are superseded diagnostic deployments and are not release evidence.
+
+The isolated upgrade rehearsal on `0x18e78e546dEB4ABb28D7B4f306D056E860CE32b6` proved an authorized exact-byte upgrade `FINALIZED/SUCCESS` and an unauthorized upgrade `FINALIZED/ERROR`; source hash and claim count remained unchanged. This proves the authorization surface of the reviewed storage layout, not an upgrade of the release instance.
 
 ## Upgrade controls
 

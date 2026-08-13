@@ -9,4 +9,5 @@ dist/
 coverage/
 .vercel/
 evidence/
+.downloads/
 .server-*.log
