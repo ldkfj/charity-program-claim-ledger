@@ -178,16 +178,16 @@ class CharityProgramClaimLedger(gl.Contract):
         def leader_fn() -> dict:
             try:
                 api_response = gl.nondet.web.request(crosscheck_url, method="GET")
-                if api_response.status_code == 429 or api_response.status_code >= 500:
+                if api_response.status == 429 or api_response.status >= 500:
                     return self._unresolved_result("A bound evidence source was temporarily unavailable")
-                if api_response.status_code < 200 or api_response.status_code >= 300:
+                if api_response.status < 200 or api_response.status >= 300:
                     return self._unresolved_result("The filing cross-check could not be retrieved")
 
                 crosscheck = api_response.body.decode("utf-8")
                 filing_response = gl.nondet.web.request(filing_url, method="GET")
-                if filing_response.status_code == 429 or filing_response.status_code >= 500:
+                if filing_response.status == 429 or filing_response.status >= 500:
                     return self._unresolved_result("A bound evidence source was temporarily unavailable")
-                if filing_response.status_code < 200 or filing_response.status_code >= 300:
+                if filing_response.status < 200 or filing_response.status >= 300:
                     return self._unresolved_result("The bound IRS filing could not be retrieved")
                 filing_html = filing_response.body.decode("utf-8")
                 identity = self._filing_identity(filing_html)
@@ -206,10 +206,10 @@ class CharityProgramClaimLedger(gl.Contract):
                 schedule_response = gl.nondet.web.request(
                     self._schedule_o_url(object_id), method="GET"
                 )
-                if schedule_response.status_code == 429 or schedule_response.status_code >= 500:
+                if schedule_response.status == 429 or schedule_response.status >= 500:
                     return self._unresolved_result("A bound evidence source was temporarily unavailable")
                 schedule_html = ""
-                if 200 <= schedule_response.status_code < 300:
+                if 200 <= schedule_response.status < 300:
                     schedule_html = schedule_response.body.decode("utf-8")
                 prompt = self._assessment_prompt(
                     ein,

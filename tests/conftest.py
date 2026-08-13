@@ -119,7 +119,7 @@ class FakeWeb:
             body = cls.filing_body
         else:
             body = cls.crosscheck_body
-        return types.SimpleNamespace(status_code=cls.response_status, body=body)
+        return types.SimpleNamespace(status=cls.response_status, body=body)
 
     @classmethod
     def render(cls, _url, mode="text"):
