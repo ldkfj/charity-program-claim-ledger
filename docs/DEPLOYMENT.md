@@ -17,15 +17,33 @@
 - Source bytes: `26893`
 - Exact reviewed commit: `56a93a329403ac6ad94770380a1c1e6acbf68588`
 - Selected deployer/upgrader: `0x09Cdd3BeE61e0080cBD00ad61Bc1b44D3f1F289a`
-- Deployment transaction: `0x7404ddc25320ec5f2c6927f4fae59ea9abfe0dcfdfb22eef4364061a6bbe3dc1`
-- Release contract: `0x07Bca9edBCBEA28A4A3452126832cf5CE7962452`
-- Explorer: https://explorer-studio.genlayer.com/address/0x07Bca9edBCBEA28A4A3452126832cf5CE7962452
+- Deployment transaction: `0xd0118fde73e016cf6dee278866251cc656cd83350c1cb35712fe3fef30165336`
+- Release contract: `0xa5754435B7411Faa56de25D1311Ff2E3B4356b2B`
+- Explorer: https://explorer-studio.genlayer.com/address/0xa5754435B7411Faa56de25D1311Ff2E3B4356b2B
 
 The primary AI selected the Task-local Studio account above after anonymous `PRE_DEPLOY` approval and used it as deployer and Root Slot upgrader. No account, credential, contract address, or deployment evidence from another Task was reused.
 
 ## Accepted deployment evidence
 
-The fresh deployment transaction is `FINALIZED`; the leader execution is `SUCCESS`; all five recorded validator votes agree; and `from_address` equals the selected deployer. Explorer contract-code readback decodes to exactly 26,893 bytes and the approved SHA-256 above. The earlier addresses `0x05FCf32aCa5265D733D4524D4346fDF4277fE100`, `0x18e78e546dEB4ABb28D7B4f306D056E860CE32b6`, and `0x33297B6C682B4FcE63bd0d26fd6842B79FB8a07B` are superseded diagnostic deployments and are not release evidence.
+The fresh deployment transaction is `FINALIZED`; leader execution is `SUCCESS`; its recorded votes contain three `agree`, two `idle`, and no disagreement; and `from_address` equals the selected deployer. Contract-code readback decodes to exactly 26,893 bytes and the approved SHA-256 above. The earlier addresses `0x07Bca9edBCBEA28A4A3452126832cf5CE7962452`, `0x05FCf32aCa5265D733D4524D4346fDF4277fE100`, `0x18e78e546dEB4ABb28D7B4f306D056E860CE32b6`, and `0x33297B6C682B4FcE63bd0d26fd6842B79FB8a07B` are superseded diagnostic deployments and are not release evidence.
+
+## Studionet live matrix
+
+All successful writes below reached `FINALIZED/SUCCESS` and were followed by authoritative contract readback. Expected negative controls reached `FINALIZED/ERROR` and preserved state.
+
+| Case | Transaction | Authoritative result |
+|---|---|---|
+| Register wrong-period claim 1 | `0x9569a8763ff265203641ba8515780ada89a77198c7bf382ead603e9154f90165` | `FROZEN`, wallet-bound intent resolved to ID 1 |
+| Assess wrong-period claim 1 | `0x2f597cc7c9fd587556c33174f4261e60593bf665c24a643da69a57d917c58499` | `ASSESSED / WRONG_PERIOD_OR_ENTITY` |
+| Register correct claim 2 | `0x4099ec9d6d1d71a1f079bb6b90c2d8e852aee8b05fb7d79084b122f094cbda18` | `FROZEN`, wallet-bound intent resolved to ID 2 |
+| Assess correct claim 2 | `0x4a3f50b4f5496e9d30caec16e0d1b9b81a971b1724831934ac5e44297c3381d0` | `SUPPORTED_BY_FILING`; 23,377,236 / 33,823,175 = 6,911 bps |
+| Unauthorized successor link | `0x8e3bdf777ebbbdf7bdad795e2f01465a5317494d84fe2634d9ef8bd021daeb61` | `FINALIZED/ERROR`; claim 1 unchanged |
+| Authorized successor link | `0xb9603a3d614e1cbe39fb258520ce65bbc300337ff4de45424a09121f94bc0454` | Claim 1 `SUPERSEDED`, successor ID 2 |
+| Register unavailable-evidence claim 3 | `0xa525319bd754db5fdce70366f691035bc7b868d9c8dde56e6ee2f66767195f51` | `FROZEN`, intent resolved to ID 3 |
+| Duplicate registration intent | `0xd1d457bb753784b2a59be6fe0906a5bc66e65bf76bd68bb3fc99c39cb5f314b5` | `FINALIZED/ERROR`; global count remained 3 |
+| Assess unavailable evidence | `0x79f6c7fbbbaeee4e8f255c159d07c90d18944c1afab2a475a4e48e59c5179c5c` | `UNRESOLVED`, retries 0 |
+| Retry unavailable evidence | `0x7ab2cab7215d5425b338e9b87f46f85f5c7f7c521191bc1937ba6c339ebac16c` | `UNRESOLVED`, retries 1 |
+| Replay identical retry intent | `0x712004a7201ec79f4e8c53176397054735067645fadb5d63181a83cb9198ab93` | `FINALIZED/SUCCESS`; retries remained 1 |
 
 The isolated upgrade rehearsal on `0x18e78e546dEB4ABb28D7B4f306D056E860CE32b6` proved an authorized exact-byte upgrade `FINALIZED/SUCCESS` and an unauthorized upgrade `FINALIZED/ERROR`; source hash and claim count remained unchanged. This proves the authorization surface of the reviewed storage layout, not an upgrade of the release instance.
 
