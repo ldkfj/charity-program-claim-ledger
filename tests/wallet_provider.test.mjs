@@ -353,3 +353,13 @@ test("fresh app state stays disconnected and discovery listener precedes provide
       source.indexOf('dispatchEvent(new Event("eip6963:requestProvider"'),
   );
 });
+
+test("wallet controls live in the masthead before main content", () => {
+  const html = readFileSync(new URL("../frontend/index.html", import.meta.url), "utf8");
+  const masthead = html.indexOf('<header class="masthead">');
+  const walletButton = html.indexOf('id="wallet-button"');
+  const walletStatus = html.indexOf('id="wallet-status"');
+  const main = html.indexOf('<main id="main">');
+  assert.ok(masthead >= 0 && walletButton > masthead && walletButton < main);
+  assert.ok(walletStatus > walletButton && walletStatus < main);
+});

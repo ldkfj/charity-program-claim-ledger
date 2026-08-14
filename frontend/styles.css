@@ -89,6 +89,22 @@ main,
   text-align: center;
 }
 
+.masthead-top {
+  display: grid;
+  gap: var(--space-sm);
+  justify-items: center;
+}
+
+.masthead-wallet {
+  display: grid;
+  gap: var(--space-xs);
+  justify-items: center;
+}
+
+.masthead-wallet .field-note {
+  margin: 0;
+}
+
 .issue-line,
 .network-line,
 .eyebrow,
@@ -494,6 +510,18 @@ dialog::backdrop {
 }
 
 @media (min-width: 40rem) {
+  .masthead-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    justify-items: stretch;
+    text-align: start;
+  }
+
+  .masthead-wallet {
+    justify-items: end;
+    text-align: end;
+  }
+
   .facts div {
     grid-template-columns: minmax(10rem, 1fr) minmax(0, 2fr);
   }
