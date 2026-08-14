@@ -137,6 +137,11 @@ export function receiptSucceeded(receipt) {
   };
 }
 
+export async function waitForCanonicalReceipt(client, hash, finalizedStatus) {
+  await client.waitForTransactionReceipt({ hash, status: finalizedStatus, fullTransaction: false });
+  return client.getTransaction({ hash });
+}
+
 export function clearFinalizedFailure(storage, receipt, readbackCompleted) {
   const outcome = receiptSucceeded(receipt);
   if (!outcome.finalized || outcome.executionSucceeded || !readbackCompleted) return false;

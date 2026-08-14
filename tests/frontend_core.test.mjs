@@ -12,6 +12,7 @@ import {
   positiveId,
   receiptSucceeded,
   registrationArgs,
+  waitForCanonicalReceipt,
 } from "../frontend/core.js";
 
 const ADDRESS = "0x1111111111111111111111111111111111111111";
@@ -126,6 +127,26 @@ test("receipt with missing status fails closed instead of assuming finality", ()
   const result = receiptSucceeded({ txExecutionResultName: "FINISHED_WITH_RETURN" });
   assert.equal(result.finalized, false);
   assert.equal(result.executionSucceeded, true);
+});
+
+test("finality wait is followed by a canonical transaction read", async () => {
+  const calls = [];
+  const canonical = { statusName: "FINALIZED", txExecutionResultName: "SUCCESS" };
+  const client = {
+    async waitForTransactionReceipt(options) {
+      calls.push(["wait", options]);
+      return { transactionHash: options.hash };
+    },
+    async getTransaction(options) {
+      calls.push(["get", options]);
+      return canonical;
+    },
+  };
+  assert.equal(await waitForCanonicalReceipt(client, "0xabc", "FINALIZED"), canonical);
+  assert.deepEqual(calls, [
+    ["wait", { hash: "0xabc", status: "FINALIZED", fullTransaction: false }],
+    ["get", { hash: "0xabc" }],
+  ]);
 });
 
 test("finalized execution error releases pending only after authoritative readback", () => {

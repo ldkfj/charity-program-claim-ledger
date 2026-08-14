@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/genlayer-js@1.1.8";
 import { studionet } from "https://esm.sh/genlayer-js@1.1.8/chains";
 import { TransactionStatus } from "https://esm.sh/genlayer-js@1.1.8/types";
+import { waitForCanonicalReceipt } from "./core.js";
 
 export const readClient = createClient({ chain: studionet });
 
@@ -34,9 +35,5 @@ export async function submitWrite(client, address, functionName, args) {
 }
 
 export async function waitFinalized(hash) {
-  return readClient.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.FINALIZED,
-    fullTransaction: false,
-  });
+  return waitForCanonicalReceipt(readClient, hash, TransactionStatus.FINALIZED);
 }
