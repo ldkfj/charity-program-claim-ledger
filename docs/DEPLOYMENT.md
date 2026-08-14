@@ -115,3 +115,52 @@ If Studionet or its chain state resets, the old address and state cannot be reco
 - isolated authorized and unauthorized upgrade rehearsal;
 - live proof matrix for register, assess happy path, unresolved path, retry, successor link, and rejected replay/unauthorized actions;
 - frontend reads and writes against the same accepted Studionet contract.
+
+## Production Vercel E2E evidence
+
+- Stable production URL: `https://charity-program-claim-ledger.vercel.app`
+- Locked Vercel target: team `gam9`, project `charity-program-claim-ledger`
+- Tested frontend revision: `9407823d6d59e0a5fc1d189e93de8d6b3f9ea1fc`
+- Tested deployment: `dpl_JDbn3pghvVUnhW3mpHF14zPEBaWq`
+- User-owned wallet/account: OKX Wallet and MetaMask provider paths, account `0x7885536194BbD6E1D0A6Ab991aB215CFa9542339`; the human user approved provider access and signed the two live writes.
+
+| Case | Evidence | Result |
+|---|---|---|
+| Production load and layout | Stable alias returned HTTP 200; title and release contract rendered; wallet controls measured inside the masthead at the desktop top-right | PASS |
+| Public read without wallet | Claim 1 read as `SUPERSEDED/WRONG_PERIOD_OR_ENTITY`; after disconnect, claim 12 still read as `ASSESSED/WRONG_PERIOD_OR_ENTITY` | PASS |
+| Mandatory provider chooser | Fresh load stayed disconnected; chooser listed OKX Wallet and MetaMask independently; selection bound the exact account and Studionet | PASS |
+| Register claim 12 | `0x4b818df5a54714bf8a1178ef72f91bd8076dd855c12867bc49ae7e8b258edf6d`; Explorer `FINALIZED/SUCCESS/Accepted`; count 11 → 12; exact intent `ec84ff67-5368-4d8d-87a9-d41e60e5f6d8` and registrant read back | PASS |
+| Interrupted polling and recovery | Browser RPC returned `Failed to fetch`; pending hash remained locked; Explorer and canonical transaction read proved finality; the same transaction was reconciled without replay | PASS |
+| Assess claim 12 | `0x5d3d80366a78fd6703d6408b967a7ec2284ef6a8a3ef8175a92e90ead9499f9a`; Explorer `FINALIZED/SUCCESS/Accepted`; frontend cleared pending only after canonical receipt plus authoritative claim readback | PASS |
+| Validation before wallet | Malformed EIN `123` produced `EIN must contain exactly 9 digits.` with no wallet request or transaction | PASS |
+| Invalid retry guard | Retrying assessed claim 12 produced `Authoritative readback must show UNRESOLVED before retry.` with no wallet request or transaction | PASS |
+| Reload/disconnect behavior | Reload started disconnected; explicit provider choice was required again; disconnect cleared the write session while public reads continued | PASS |
+
+Two live-browser defects were found and repaired during this matrix: the finality wait envelope was replaced by a canonical transaction read keyed to the original hash, and the receipt classifier was extended to accept the live `txExecutionResult` field plus leader-receipt fallback. Regression coverage now proves both shapes while preserving fail-closed behavior for missing finality or execution data.
+
+## Final submission scorecard candidate
+
+```text
+GENLAYER SUBMISSION CATEGORY AND SCORECARD
+Category: PROJECT
+Validity gate: PASS
+
+GenLayer fit: 5
+Evidence: Validators independently fetch the exact IRS filing and reach consensus on a bounded factual assessment whose verdict is stored on-chain.
+Weakness/blocker: Public filing availability and source quality can still yield UNRESOLVED.
+
+Contract quality: 5
+Evidence: Frozen evidence identity, three templates, explicit thresholds, replay-safe intents, bounded retry, successor state, authorization controls, live boundary matrix, and isolated upgrade rehearsal all passed.
+Weakness/blocker: The single recorded upgrader remains a disclosed technical governance power.
+
+Engineering: 5
+Evidence: 32 contract tests, 29 frontend tests, semantic/lint gates, deployed-source parity, complete terminal receipts/readbacks, recovery regression coverage, and public reproducible documentation.
+Weakness/blocker: Studionet RPC availability can transiently interrupt polling; the pending journal and reconciliation flow preserve safety.
+
+Frontend / UX: 5
+Evidence: Exact production frontend supports public reads, explicit multi-provider selection, selected-provider-only writes, accessible chooser behavior, terminal transaction reconciliation, authoritative result rendering, and disconnect/reload recovery.
+Weakness/blocker: Browser-extension interoperability still depends on the installed provider and its own account-signature UX.
+
+Overall evidence-based assessment: Strong, complete PROJECT with GenLayer consensus at the core and unusually broad live evidence.
+Submission recommendation: READY after exact-revision final dual approval.
+```
