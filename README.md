@@ -102,7 +102,7 @@ The contract is classified `UPGRADABLE`. Its constructor records the deployment 
 
 ## Known limitations
 
-- The Object-ID-bound full-text route, matching organization identity, threshold matrix, all supported templates, negative controls, replay behavior, and isolated upgrade rehearsal passed with terminal receipts and authoritative readback. Anonymous `POST_DEPLOY_TEST` approval remains required before release progression.
+- The Object-ID-bound full-text route, matching organization identity, threshold matrix, all supported templates, negative controls, replay behavior, and isolated upgrade rehearsal passed with terminal receipts and authoritative readback. The pre-release tree passed anonymous `POST_DEPLOY_TEST`; the rewritten final Git identity revision still requires the final exact-revision review before submission.
 - Filing layouts and narrative quality vary; unusable evidence resolves to `UNRESOLVED` rather than a guessed verdict.
 - The frontend depends on the deployed Studionet receipt shape and will fail closed if explicit finality or execution success is absent.
-- The accepted release contract, expanded live proof matrix, and public hosting are complete; user-owned Vercel E2E evidence remains pending.
+- The accepted release contract, expanded live proof matrix, public hosting, and user-signed production Vercel E2E evidence are complete.

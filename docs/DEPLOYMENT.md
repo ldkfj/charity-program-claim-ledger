@@ -120,7 +120,7 @@ If Studionet or its chain state resets, the old address and state cannot be reco
 
 - Stable production URL: `https://charity-program-claim-ledger.vercel.app`
 - Locked Vercel target: team `gam9`, project `charity-program-claim-ledger`
-- Tested frontend revision: `9407823d6d59e0a5fc1d189e93de8d6b3f9ea1fc`
+- Tested frontend revision: `4a4502a8846d526dd12b168b94f94a9300cc18cf`
 - Tested deployment: `dpl_JDbn3pghvVUnhW3mpHF14zPEBaWq`
 - User-owned wallet/account: OKX Wallet and MetaMask provider paths, account `0x7885536194BbD6E1D0A6Ab991aB215CFa9542339`; the human user approved provider access and signed the two live writes.
 
