@@ -110,6 +110,18 @@ test("receipt requires successful finalized execution", () => {
     receiptSucceeded({ statusName: "ACCEPTED", txExecutionResultName: "FINISHED_WITH_RETURN" }).finalized,
     false,
   );
+  assert.deepEqual(receiptSucceeded({ statusName: "FINALIZED", txExecutionResult: "SUCCESS" }), {
+    finalized: true,
+    executionSucceeded: true,
+    execution: "SUCCESS",
+  });
+  assert.equal(
+    receiptSucceeded({
+      status: "FINALIZED",
+      consensus_data: { leader_receipt: [{ execution_result: "SUCCESS" }] },
+    }).executionSucceeded,
+    true,
+  );
 });
 
 test("normalizeClaim rejects incomplete and unknown-state payloads", () => {

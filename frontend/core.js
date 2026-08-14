@@ -128,7 +128,11 @@ export function parsePendingIntent(serialized) {
 export function receiptSucceeded(receipt) {
   const finalStatus = String(receipt?.statusName ?? receipt?.status ?? "").toUpperCase();
   const execution = String(
-    receipt?.txExecutionResultName ?? receipt?.executionResultName ?? "",
+    receipt?.txExecutionResultName ??
+      receipt?.txExecutionResult ??
+      receipt?.executionResultName ??
+      receipt?.consensus_data?.leader_receipt?.[0]?.execution_result ??
+      "",
   ).toUpperCase();
   return {
     finalized: finalStatus === "FINALIZED",
