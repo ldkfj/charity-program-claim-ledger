@@ -4,7 +4,7 @@ Charity Program Claim Ledger freezes a public charity claim and records how the 
 
 ## Verified links
 
-- Live app: pending public hosting
+- Live app: https://charity-program-claim-ledger.vercel.app
 - Studionet contract: `0xa5754435B7411Faa56de25D1311Ff2E3B4356b2B`
 - Explorer: https://explorer-studio.genlayer.com/address/0xa5754435B7411Faa56de25D1311Ff2E3B4356b2B
 - Network target: Studionet, chain ID `61999`
@@ -105,4 +105,4 @@ The contract is classified `UPGRADABLE`. Its constructor records the deployment 
 - The Object-ID-bound full-text route, matching organization identity, threshold matrix, all supported templates, negative controls, replay behavior, and isolated upgrade rehearsal passed with terminal receipts and authoritative readback. Anonymous `POST_DEPLOY_TEST` approval remains required before release progression.
 - Filing layouts and narrative quality vary; unusable evidence resolves to `UNRESOLVED` rather than a guessed verdict.
 - The frontend depends on the deployed Studionet receipt shape and will fail closed if explicit finality or execution success is absent.
-- The accepted release contract and expanded live proof matrix are complete; public hosting and user-owned Vercel E2E evidence remain pending.
+- The accepted release contract, expanded live proof matrix, and public hosting are complete; user-owned Vercel E2E evidence remains pending.
