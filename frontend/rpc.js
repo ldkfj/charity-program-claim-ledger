@@ -4,10 +4,8 @@ import { TransactionStatus } from "https://esm.sh/genlayer-js@1.1.8/types";
 
 export const readClient = createClient({ chain: studionet });
 
-export async function createWalletClient(provider, account) {
-  const client = createClient({ chain: studionet, account, provider });
-  await client.connect("studionet");
-  return client;
+export function createWalletClient(provider, account) {
+  return createClient({ chain: studionet, account, provider });
 }
 
 export async function readClaim(address, claimId) {

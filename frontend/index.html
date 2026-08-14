@@ -246,10 +246,11 @@
       </p>
     </footer>
 
-    <dialog id="wallet-dialog" aria-labelledby="wallet-dialog-title">
+    <dialog id="wallet-dialog" aria-labelledby="wallet-dialog-title" tabindex="-1">
       <h2 id="wallet-dialog-title">Choose a wallet provider</h2>
       <p>Select the provider that may request access. Nothing is connected automatically.</p>
       <div class="provider-list" id="provider-list"></div>
+      <div class="wallet-error" id="wallet-error" role="alert" aria-live="assertive" hidden></div>
       <div class="button-row">
         <button class="button" id="wallet-cancel" type="button">Cancel</button>
       </div>

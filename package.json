@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:frontend": "node --test tests/frontend_core.test.mjs",
+    "test:frontend": "node --test tests/*.test.mjs",
     "serve": "python -m http.server 4173"
   }
 }

@@ -475,6 +475,13 @@ dialog::backdrop {
   justify-content: flex-start;
 }
 
+.wallet-error {
+  margin-block: 0 var(--space-lg);
+  border-inline-start: var(--rule-heavy) solid var(--color-error);
+  padding-inline-start: var(--space-md);
+  color: var(--color-error);
+}
+
 .colophon {
   border-block-start: var(--rule-hair) solid var(--color-rule-strong);
   padding-block: var(--space-xl);

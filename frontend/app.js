@@ -19,6 +19,14 @@ import {
   submitWrite,
   waitFinalized,
 } from "./rpc.js";
+import {
+  bindProviderListeners,
+  connectSelectedProvider,
+  createChooserLifecycle,
+  createProviderRegistry,
+  isStudionetChain,
+  setInlineWalletError,
+} from "./wallet.js";
 
 const byId = (id) => document.getElementById(id);
 const contractInput = byId("contract-address");
@@ -26,11 +34,17 @@ const readStatus = byId("read-status");
 const writeStatus = byId("write-status");
 const walletDialog = byId("wallet-dialog");
 const providerList = byId("provider-list");
-const providers = new Map();
+const walletError = byId("wallet-error");
+const providerRegistry = createProviderRegistry(window.ethereum);
+const walletChooser = createChooserLifecycle({
+  dialog: walletDialog,
+  backgroundElements: [...document.body.children].filter((element) => element !== walletDialog),
+});
 
 let selectedProvider = null;
 let selectedAccount = null;
 let writeClient = null;
+let removeProviderListeners = () => {};
 
 class PendingNotAppliedError extends Error {}
 
@@ -260,23 +274,14 @@ async function executeWrite(action, args, expected = {}) {
   }
 }
 
-function announceProvider(detail) {
-  const key = detail.info?.uuid || detail.info?.rdns || detail.info?.name;
-  if (key && detail.provider) providers.set(key, detail);
-}
-
-window.addEventListener("eip6963:announceProvider", (event) => announceProvider(event.detail));
-window.dispatchEvent(new Event("eip6963:requestProvider"));
-if (window.ethereum) {
-  providers.set("legacy-injected", {
-    info: { name: "Injected wallet", rdns: "legacy.injected" },
-    provider: window.ethereum,
-  });
+function handleProviderAnnouncement(event) {
+  if (providerRegistry.announce(event.detail) && walletDialog.open) renderProviders();
 }
 
 function renderProviders() {
   providerList.replaceChildren();
-  if (providers.size === 0) {
+  const providers = providerRegistry.options();
+  if (providers.length === 0) {
     providerList.append(
       Object.assign(document.createElement("p"), {
         textContent: "No injected wallet provider was detected. Install or enable one, then reopen this chooser.",
@@ -284,7 +289,7 @@ function renderProviders() {
     );
     return;
   }
-  for (const detail of providers.values()) {
+  for (const detail of providers) {
     const option = document.createElement("button");
     option.type = "button";
     option.className = "button provider-option";
@@ -295,45 +300,53 @@ function renderProviders() {
 }
 
 async function connectProvider(detail) {
+  setInlineWalletError(walletError, null);
   try {
-    const accounts = await detail.provider.request({ method: "eth_requestAccounts" });
-    if (!Array.isArray(accounts) || !accounts[0]) throw new Error("The wallet returned no account.");
-    selectedProvider = detail.provider;
-    selectedAccount = accounts[0];
-    writeClient = await createWalletClient(selectedProvider, selectedAccount);
-    selectedProvider.on?.("accountsChanged", handleAccountsChanged);
-    selectedProvider.on?.("chainChanged", handleChainChanged);
+    const connection = await connectSelectedProvider(detail, createWalletClient);
+    disconnectWallet();
+    selectedProvider = connection.provider;
+    selectedAccount = connection.account;
+    writeClient = connection.client;
+    removeProviderListeners = bindProviderListeners(selectedProvider, {
+      accountsChanged: handleAccountsChanged,
+      chainChanged: handleChainChanged,
+    });
     byId("wallet-status").textContent = `${detail.info.name}: ${selectedAccount}`;
     byId("wallet-button").textContent = "Switch wallet";
     byId("disconnect-button").hidden = false;
-    walletDialog.close();
+    walletChooser.close();
   } catch (error) {
-    status(writeStatus, `Wallet was not connected: ${error.message}`, "error");
+    setInlineWalletError(walletError, `Wallet was not connected: ${error.message || error}`);
   }
 }
 
-function disconnectWallet() {
-  selectedProvider?.removeListener?.("accountsChanged", handleAccountsChanged);
-  selectedProvider?.removeListener?.("chainChanged", handleChainChanged);
+function disconnectWallet(message = "No wallet selected.") {
+  removeProviderListeners();
+  removeProviderListeners = () => {};
   selectedProvider = null;
   selectedAccount = null;
   writeClient = null;
-  byId("wallet-status").textContent = "No wallet selected.";
+  byId("wallet-status").textContent = message;
   byId("wallet-button").textContent = "Choose wallet";
   byId("disconnect-button").hidden = true;
 }
 
 function handleAccountsChanged(accounts) {
-  if (!accounts?.[0]) return disconnectWallet();
-  selectedAccount = null;
-  writeClient = null;
-  byId("wallet-status").textContent = "Wallet account changed. Choose the provider again to confirm it.";
+  disconnectWallet(
+    accounts?.length
+      ? "Wallet account changed. Choose the provider again to confirm it."
+      : "Wallet removed account access. Choose a provider to reconnect.",
+  );
 }
 
-function handleChainChanged() {
-  writeClient = null;
-  byId("wallet-status").textContent = "Wallet network changed. Choose the provider again to confirm Studionet.";
+function handleChainChanged(chainId) {
+  if (!isStudionetChain(chainId)) {
+    disconnectWallet("Wallet left Studionet. Choose the provider again to reconnect safely.");
+  }
 }
+
+window.addEventListener("eip6963:announceProvider", handleProviderAnnouncement);
+window.dispatchEvent(new Event("eip6963:requestProvider"));
 
 byId("contract-form").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -425,11 +438,12 @@ byId("successor-form").addEventListener("submit", async (event) => {
 });
 
 byId("wallet-button").addEventListener("click", () => {
+  setInlineWalletError(walletError, null);
   renderProviders();
-  walletDialog.showModal();
+  walletChooser.open(byId("wallet-button"));
 });
-byId("wallet-cancel").addEventListener("click", () => walletDialog.close());
-byId("disconnect-button").addEventListener("click", disconnectWallet);
+byId("wallet-cancel").addEventListener("click", walletChooser.close);
+byId("disconnect-button").addEventListener("click", () => disconnectWallet());
 byId("reconcile-button").addEventListener("click", async () => {
   try {
     await reconcile();
@@ -446,3 +460,9 @@ contractInput.value = savedAddress && isContractAddress(savedAddress)
   ? savedAddress
   : RELEASE_CONTRACT_ADDRESS;
 refreshPendingControl();
+
+window.addEventListener("pagehide", () => {
+  window.removeEventListener("eip6963:announceProvider", handleProviderAnnouncement);
+  removeProviderListeners();
+  walletChooser.destroy();
+}, { once: true });
