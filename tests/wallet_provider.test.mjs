@@ -9,9 +9,11 @@ import {
   connectSelectedProvider,
   createChooserLifecycle,
   createProviderRegistry,
+  createWalletSessionGuard,
   ensureStudionet,
   isStudionetChain,
   setInlineWalletError,
+  submitSessionWrite,
 } from "../frontend/wallet.js";
 
 const ACCOUNT = "0x1111111111111111111111111111111111111111";
@@ -42,7 +44,13 @@ function fakeProvider(requestImpl = async () => null) {
 }
 
 function detail(uuid, provider, name = uuid) {
-  return { info: { uuid, name, rdns: `org.example.${uuid}` }, provider };
+  const suffix = [...uuid]
+    .map((character) => character.charCodeAt(0).toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 12)
+    .padEnd(12, "0");
+  const validUuid = `00000000-0000-4000-8000-${suffix}`;
+  return { info: { uuid: validUuid, name, rdns: `org.example.${uuid}` }, provider };
 }
 
 test("registry covers zero, one, and two valid EIP-6963 providers", () => {
@@ -60,12 +68,12 @@ test("registry rejects malformed announcements and deduplicates UUID plus provid
   const registry = createProviderRegistry(null);
   const first = fakeProvider();
   const replacement = fakeProvider();
-  assert.equal(registry.announce({ info: { uuid: "bad" }, provider: first }), false);
+  assert.equal(registry.announce({ info: { uuid: "not-a-uuid", name: "Bad", rdns: "org.bad" }, provider: first }), false);
   registry.announce(detail("same-uuid", first, "First name"));
   registry.announce(detail("same-uuid", replacement, "Updated name"));
   registry.announce(detail("new-uuid", replacement, "Same object"));
   assert.equal(registry.options().length, 1);
-  assert.equal(registry.options()[0].info.uuid, "new-uuid");
+  assert.equal(registry.options()[0].info.uuid, detail("new-uuid", replacement).info.uuid);
   assert.equal(registry.options()[0].provider, replacement);
 });
 
@@ -163,6 +171,60 @@ test("account change/removal events are observed and every provider listener is 
   cleanup();
   assert.equal(provider.listenerCount("accountsChanged"), 0);
   assert.equal(provider.listenerCount("chainChanged"), 0);
+});
+
+test("session guard clears active account/client on account changes and non-Studionet chains", () => {
+  const provider = fakeProvider();
+  const invalidations = [];
+  const session = createWalletSessionGuard({
+    provider,
+    account: ACCOUNT,
+    client: { write: true },
+    onInvalidated: (event) => invalidations.push(event),
+  });
+  assert.equal(session.active.account, ACCOUNT);
+  provider.emit("accountsChanged", ["0x2222222222222222222222222222222222222222"]);
+  assert.equal(session.active, null);
+  assert.equal(invalidations[0].type, "accountsChanged");
+  session.cleanup();
+  const removed = createWalletSessionGuard({
+    provider,
+    account: ACCOUNT,
+    client: { write: true },
+    onInvalidated: (event) => invalidations.push(event),
+  });
+  provider.emit("accountsChanged", []);
+  assert.equal(removed.active, null);
+  assert.deepEqual(invalidations.at(-1).accounts, []);
+  removed.cleanup();
+  const second = createWalletSessionGuard({
+    provider,
+    account: ACCOUNT,
+    client: { write: true },
+    onInvalidated: (event) => invalidations.push(event),
+  });
+  provider.emit("chainChanged", "0x1");
+  assert.equal(second.active, null);
+  assert.equal(invalidations.at(-1).type, "chainChanged");
+  second.cleanup();
+});
+
+test("application write helper uses the selected session client, never a global fallback", async () => {
+  const provider = fakeProvider();
+  const selectedClient = { name: "selected" };
+  const globalClient = { name: "global" };
+  const session = createWalletSessionGuard({ provider, account: ACCOUNT, client: selectedClient });
+  const usedClients = [];
+  const hash = await submitSessionWrite(session, async (client, address, method, args) => {
+    usedClients.push(client);
+    assert.deepEqual([address, method, args], [ACCOUNT, "record", [1n]]);
+    return "0xhash";
+  }, ACCOUNT, "record", [1n]);
+  assert.equal(hash, "0xhash");
+  assert.deepEqual(usedClients, [selectedClient]);
+  assert.equal(usedClients.includes(globalClient), false);
+  session.cleanup();
+  assert.throws(() => submitSessionWrite(session, () => null), /Choose a wallet provider/);
 });
 
 test("chain validation accepts only Studionet representations", () => {

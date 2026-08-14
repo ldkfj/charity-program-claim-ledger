@@ -9,6 +9,7 @@ export const STUDIONET_ADD_PARAMS = Object.freeze({
 });
 
 const ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FOCUSABLE_SELECTOR = [
   "button:not([disabled])",
   "[href]",
@@ -37,7 +38,7 @@ export function normalizeAnnouncement(detail) {
   const uuid = cleanText(detail?.info?.uuid, 200);
   const name = cleanText(detail?.info?.name, 100);
   const rdns = cleanText(detail?.info?.rdns, 200);
-  if (!uuid || !name || !rdns || !isInjectedProvider(detail?.provider)) return null;
+  if (!uuid || !UUID_PATTERN.test(uuid) || !name || !rdns || !isInjectedProvider(detail?.provider)) return null;
   return { info: { uuid, name, rdns }, provider: detail.provider };
 }
 
@@ -125,6 +126,35 @@ export function bindProviderListeners(provider, handlers) {
   return () => {
     for (const [eventName, handler] of bindings) provider.removeListener(eventName, handler);
   };
+}
+
+export function createWalletSessionGuard({ provider, account, client, onInvalidated }) {
+  let active = { provider, account, client };
+  const cleanup = bindProviderListeners(provider, {
+    accountsChanged(accounts) {
+      active = null;
+      onInvalidated?.({ type: "accountsChanged", accounts });
+    },
+    chainChanged(chainId) {
+      if (!isStudionetChain(chainId)) {
+        active = null;
+        onInvalidated?.({ type: "chainChanged", chainId });
+      }
+    },
+  });
+  return {
+    get active() { return active; },
+    cleanup() {
+      active = null;
+      cleanup();
+    },
+  };
+}
+
+export function submitSessionWrite(session, submit, ...args) {
+  const client = session?.active?.client;
+  if (!client) throw new Error("Choose a wallet provider before writing.");
+  return submit(client, ...args);
 }
 
 export function isStudionetChain(chainId) {

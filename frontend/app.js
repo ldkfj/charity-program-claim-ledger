@@ -20,12 +20,12 @@ import {
   waitFinalized,
 } from "./rpc.js";
 import {
-  bindProviderListeners,
   connectSelectedProvider,
   createChooserLifecycle,
   createProviderRegistry,
-  isStudionetChain,
+  createWalletSessionGuard,
   setInlineWalletError,
+  submitSessionWrite,
 } from "./wallet.js";
 
 const byId = (id) => document.getElementById(id);
@@ -44,7 +44,7 @@ const walletChooser = createChooserLifecycle({
 let selectedProvider = null;
 let selectedAccount = null;
 let writeClient = null;
-let removeProviderListeners = () => {};
+let walletSession = null;
 
 class PendingNotAppliedError extends Error {}
 
@@ -211,7 +211,13 @@ async function reconcile(intent = pendingIntent()) {
       throw new Error("Choose the original registration wallet before resuming this intent.");
     }
     status(writeStatus, "No authoritative effect was found. Resubmitting the same stored intent…");
-    intent.txHash = await submitWrite(writeClient, intent.contractAddress, intent.action, intent.args);
+    intent.txHash = await submitSessionWrite(
+      walletSession,
+      submitWrite,
+      intent.contractAddress,
+      intent.action,
+      intent.args,
+    );
     localStorage.setItem(PENDING_KEY, JSON.stringify(intent));
     refreshPendingControl();
   }
@@ -261,7 +267,7 @@ async function executeWrite(action, args, expected = {}) {
   refreshPendingControl();
   status(writeStatus, "Requesting an explicit wallet signature…");
   try {
-    intent.txHash = await submitWrite(writeClient, address, action, args);
+    intent.txHash = await submitSessionWrite(walletSession, submitWrite, address, action, args);
     localStorage.setItem(PENDING_KEY, JSON.stringify(intent));
     refreshPendingControl();
     await reconcile(intent);
@@ -307,9 +313,19 @@ async function connectProvider(detail) {
     selectedProvider = connection.provider;
     selectedAccount = connection.account;
     writeClient = connection.client;
-    removeProviderListeners = bindProviderListeners(selectedProvider, {
-      accountsChanged: handleAccountsChanged,
-      chainChanged: handleChainChanged,
+    walletSession = createWalletSessionGuard({
+      provider: selectedProvider,
+      account: selectedAccount,
+      client: writeClient,
+      onInvalidated: ({ type, accounts }) => {
+        disconnectWallet(
+          type === "accountsChanged"
+            ? accounts?.length
+              ? "Wallet account changed. Choose the provider again to confirm it."
+              : "Wallet removed account access. Choose a provider to reconnect."
+            : "Wallet left Studionet. Choose the provider again to reconnect safely.",
+        );
+      },
     });
     byId("wallet-status").textContent = `${detail.info.name}: ${selectedAccount}`;
     byId("wallet-button").textContent = "Switch wallet";
@@ -321,28 +337,14 @@ async function connectProvider(detail) {
 }
 
 function disconnectWallet(message = "No wallet selected.") {
-  removeProviderListeners();
-  removeProviderListeners = () => {};
+  walletSession?.cleanup();
+  walletSession = null;
   selectedProvider = null;
   selectedAccount = null;
   writeClient = null;
   byId("wallet-status").textContent = message;
   byId("wallet-button").textContent = "Choose wallet";
   byId("disconnect-button").hidden = true;
-}
-
-function handleAccountsChanged(accounts) {
-  disconnectWallet(
-    accounts?.length
-      ? "Wallet account changed. Choose the provider again to confirm it."
-      : "Wallet removed account access. Choose a provider to reconnect.",
-  );
-}
-
-function handleChainChanged(chainId) {
-  if (!isStudionetChain(chainId)) {
-    disconnectWallet("Wallet left Studionet. Choose the provider again to reconnect safely.");
-  }
 }
 
 window.addEventListener("eip6963:announceProvider", handleProviderAnnouncement);
@@ -463,6 +465,6 @@ refreshPendingControl();
 
 window.addEventListener("pagehide", () => {
   window.removeEventListener("eip6963:announceProvider", handleProviderAnnouncement);
-  removeProviderListeners();
+  walletSession?.cleanup();
   walletChooser.destroy();
 }, { once: true });

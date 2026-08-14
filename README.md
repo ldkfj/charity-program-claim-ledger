@@ -78,7 +78,7 @@ $env:GENVM_VERSION='v0.3.0-rc7'
 genvm-lint check contracts/charity_claim_ledger.py --json
 ```
 
-Current local result: 32 contract behavior tests passed, 24 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The remediated contract source is deployed with byte-for-byte parity. Its initial Studionet write/readback matrix passed; threshold and remaining-template cases are still pending after an RPC interruption.
+Current local result: 32 contract behavior tests passed, 26 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The remediated contract source is deployed with byte-for-byte parity. Its initial Studionet write/readback matrix passed; threshold and remaining-template cases are still pending after an RPC interruption.
 
 ## Deployment
 
