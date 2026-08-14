@@ -27,25 +27,39 @@ The primary AI selected the Task-local Studio account above after anonymous `PRE
 
 The fresh deployment transaction is `FINALIZED`; leader execution is `SUCCESS`; its recorded votes contain three `agree`, two `idle`, and no disagreement; and `from_address` equals the selected deployer. Contract-code readback decodes to exactly 26,893 bytes and the approved SHA-256 above. The earlier addresses `0x07Bca9edBCBEA28A4A3452126832cf5CE7962452`, `0x05FCf32aCa5265D733D4524D4346fDF4277fE100`, `0x18e78e546dEB4ABb28D7B4f306D056E860CE32b6`, and `0x33297B6C682B4FcE63bd0d26fd6842B79FB8a07B` are superseded diagnostic deployments and are not release evidence.
 
-## Studionet live matrix
+## Studionet live evidence ledger
 
-All successful writes below reached `FINALIZED/SUCCESS` and were followed by authoritative contract readback. Expected negative controls reached `FINALIZED/ERROR` and preserved state.
+The locked account `0x09Cdd3BeE61e0080cBD00ad61Bc1b44D3f1F289a` acted as deployer, upgrader, registrant, assessor, retry caller, and authorized successor caller. The negative authorization account was `0x458766D23AE2a78a89d09E19D9a06690a5586607`. Every PASS row has terminal receipt classification and authoritative pre/post readback; `3A/2I` means three `agree`, two `idle`, and no disagreement.
 
-| Case | Transaction | Authoritative result |
-|---|---|---|
-| Register wrong-period claim 1 | `0x9569a8763ff265203641ba8515780ada89a77198c7bf382ead603e9154f90165` | `FROZEN`, wallet-bound intent resolved to ID 1 |
-| Assess wrong-period claim 1 | `0x2f597cc7c9fd587556c33174f4261e60593bf665c24a643da69a57d917c58499` | `ASSESSED / WRONG_PERIOD_OR_ENTITY` |
-| Register correct claim 2 | `0x4099ec9d6d1d71a1f079bb6b90c2d8e852aee8b05fb7d79084b122f094cbda18` | `FROZEN`, wallet-bound intent resolved to ID 2 |
-| Assess correct claim 2 | `0x4a3f50b4f5496e9d30caec16e0d1b9b81a971b1724831934ac5e44297c3381d0` | `SUPPORTED_BY_FILING`; 23,377,236 / 33,823,175 = 6,911 bps |
-| Unauthorized successor link | `0x8e3bdf777ebbbdf7bdad795e2f01465a5317494d84fe2634d9ef8bd021daeb61` | `FINALIZED/ERROR`; claim 1 unchanged |
-| Authorized successor link | `0xb9603a3d614e1cbe39fb258520ce65bbc300337ff4de45424a09121f94bc0454` | Claim 1 `SUPERSEDED`, successor ID 2 |
-| Register unavailable-evidence claim 3 | `0xa525319bd754db5fdce70366f691035bc7b868d9c8dde56e6ee2f66767195f51` | `FROZEN`, intent resolved to ID 3 |
-| Duplicate registration intent | `0xd1d457bb753784b2a59be6fe0906a5bc66e65bf76bd68bb3fc99c39cb5f314b5` | `FINALIZED/ERROR`; global count remained 3 |
-| Assess unavailable evidence | `0x79f6c7fbbbaeee4e8f255c159d07c90d18944c1afab2a475a4e48e59c5179c5c` | `UNRESOLVED`, retries 0 |
-| Retry unavailable evidence | `0x7ab2cab7215d5425b338e9b87f46f85f5c7f7c521191bc1937ba6c339ebac16c` | `UNRESOLVED`, retries 1 |
-| Replay identical retry intent | `0x712004a7201ec79f4e8c53176397054735067645fadb5d63181a83cb9198ab93` | `FINALIZED/SUCCESS`; retries remained 1 |
+| Case | Caller role | Exact arguments | Expected | Receipt / consensus | Authoritative pre → post | Result |
+|---|---|---|---|---|---|---|
+| Deploy release `0xd0118f…65336` | Locked deployer/upgrader | 26,893-byte source; no constructor args | Successful exact-source deployment | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `3A/2I` | No contract → `0xa575…6b2B`; code 26,893 bytes / `df1636…cc24` | PASS |
+| Register wrong-period claim 1 `0x9569a8…0165` | Locked registrant | EIN `752616975`; period `202206`; Object ID `202441289349302619`; `PROGRAM_SERVICE_SHARE`; 6,911 bps; intent `cpc-live-old-20260814-0001` | New frozen claim | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `5A/0I` | count 0 → 1; intent 0 → 1; claim 1 absent → `FROZEN` | PASS |
+| Assess wrong-period claim 1 `0x2f597c…8499` | Locked assessor | claim ID 1 | Identity mismatch | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `3A/2I` | `FROZEN` → `ASSESSED/WRONG_PERIOD_OR_ENTITY` | PASS |
+| Register correct claim 2 `0x4099ec…da18` | Locked registrant | EIN `752616975`; period `202306`; same Object ID/template; 6,911 bps; intent `cpc-live-new-20260814-0001` | New frozen claim | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `5A/0I` | count 1 → 2; intent 0 → 2; claim 2 absent → `FROZEN` | PASS |
+| Assess correct claim 2 `0x4a3f50…81d0` | Locked assessor | claim ID 2 | Supported numeric result | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `3A/2I` | `FROZEN` → `ASSESSED/SUPPORTED_BY_FILING`; 23,377,236 / 33,823,175 = 6,911 bps | PASS |
+| Unauthorized successor link `0x8e3bdf…eb61` | Negative-control wallet | old ID 1; new ID 2 | Rejected without state change | `FINALIZED/ERROR`; `MAJORITY_AGREE`; `5A/0I` | claim 1 `ASSESSED`, successor 0 → unchanged | PASS |
+| Authorized successor link `0xb9603a…0454` | Locked original registrant | old ID 1; new ID 2 | Link newer assessed successor | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `3A/2I` | claim 1 `ASSESSED`, successor 0 → `SUPERSEDED`, successor 2 | PASS |
+| Register unavailable-evidence claim 3 `0xa52531…5f51` | Locked registrant | EIN `752616975`; period `202306`; Object ID `999999999999999999`; `PROGRAM_SERVICE_SHARE`; 5,000 bps; intent `cpc-live-unresolved-20260814-0001` | New frozen claim | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `3A/2I` | count 2 → 3; intent 0 → 3; claim 3 absent → `FROZEN` | PASS |
+| Duplicate registration `0xd1d457…14b5` | Locked registrant | Exact preceding registration arguments and intent | Replay rejection | `FINALIZED/ERROR`; `MAJORITY_AGREE`; `3A/2I` | count 3 → 3; intent remained claim 3 | PASS |
+| Assess unavailable evidence `0x79f6c7…9c5c` | Locked assessor | claim ID 3 | Fail closed | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `3A/2I` | `FROZEN` → `UNRESOLVED`; retries 0 | PASS |
+| Retry unavailable evidence `0x7ab2ca…c16c` | Locked retry caller | claim ID 3; intent `cpc-live-retry-20260814-0001` | One bounded retry | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `3A/2I` | `UNRESOLVED`, retries 0 → `UNRESOLVED`, retries 1 | PASS |
+| Replay retry intent `0x712004…ab93` | Locked retry caller | Exact preceding retry arguments and intent | Idempotent no-op | `FINALIZED/SUCCESS`; `MAJORITY_AGREE`; `5A/0I` | claim 3 `UNRESOLVED`, retries 1 → unchanged; count 3 | PASS |
+| Invalid EIN `0xbe31ed…7139` | Locked registrant | EIN `123`; otherwise valid registration; intent `cpc-live-invalid-20260814-0001` | Input rejection | `FINALIZED/ERROR`; `MAJORITY_AGREE`; `3A/2I` | count 3 → 3 | PASS |
 
-The isolated upgrade rehearsal on `0x18e78e546dEB4ABb28D7B4f306D056E860CE32b6` proved an authorized exact-byte upgrade `FINALIZED/SUCCESS` and an unauthorized upgrade `FINALIZED/ERROR`; source hash and claim count remained unchanged. This proves the authorization surface of the reviewed storage layout, not an upgrade of the release instance.
+### Pending expanded matrix
+
+The 49/50/51 and 299/300/301 bps boundary cases plus live `FUNDRAISING_SHARE` and `NAMED_PROGRAM_SCOPE` paths are PENDING. The first boundary submission returned an HTML RPC error before yielding a transaction hash; its intent and count must be reconciled before any retry. No boundary or template case is marked PASS until terminal receipt and authoritative readback exist.
+
+## Isolated upgrade rehearsal ledger
+
+The rehearsal used diagnostic contract `0x18e78e546dEB4ABb28D7B4f306D056E860CE32b6`, never the release instance. Its 26,948-byte historical source hash was `aa22d8c89c3231c2482f2b264a845de980b9597f10b2419361fe3662493acba9`; the later six-access runtime fix changed no storage, constructor, ABI, or upgrade logic.
+
+| Case | Caller role | Exact arguments | Expected | Receipt | Authoritative pre → post | Result |
+|---|---|---|---|---|---|---|
+| Diagnostic deployment `0x8b9296…4409` | Locked deployer/upgrader `0x09Cd…289a` | 26,948-byte `aa22d8…cba9` source; no constructor args | Successful disposable deployment | `FINALIZED/SUCCESS`; `MAJORITY_AGREE` | No contract → exact source hash; claim count 0 | PASS |
+| Authorized exact-byte upgrade `0x30522b…045e` | Locked upgrader `0x09Cd…289a` | `upgrade(b#<26,948 exact source bytes>)`; reverse-decoded hash `aa22d8…cba9` | Success with no drift | `FINALIZED/SUCCESS`; `MAJORITY_AGREE` | source `aa22d8…cba9`, count 0 → same source/count | PASS |
+| Unauthorized exact-byte upgrade `0x28b74e…a767` | Negative-control wallet `0x4587…6607` | Same exact upgrade payload | Authorization failure with rollback | `FINALIZED/ERROR`; `MAJORITY_AGREE` | source `aa22d8…cba9`, count 0 → unchanged | PASS |
 
 ## Upgrade controls
 

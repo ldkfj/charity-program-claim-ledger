@@ -78,7 +78,7 @@ $env:GENVM_VERSION='v0.3.0-rc7'
 genvm-lint check contracts/charity_claim_ledger.py --json
 ```
 
-Current local result: 32 contract behavior tests passed, 10 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The remediated source is deployed with byte-for-byte parity, and its Studionet write/readback matrix passed.
+Current local result: 32 contract behavior tests passed, 10 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The remediated source is deployed with byte-for-byte parity. Its initial Studionet write/readback matrix passed; threshold and remaining-template cases are still pending after an RPC interruption.
 
 ## Deployment
 
@@ -102,7 +102,7 @@ The contract is classified `UPGRADABLE`. Its constructor records the deployment 
 
 ## Known limitations
 
-- The Object-ID-bound full-text route, matching organization identity, and complete Studionet write/readback matrix passed; anonymous `POST_DEPLOY_TEST` approval is still required.
+- The Object-ID-bound full-text route and matching organization identity passed. The initial Studionet matrix passed, but threshold and remaining-template cases must finish before anonymous `POST_DEPLOY_TEST` approval.
 - Filing layouts and narrative quality vary; unusable evidence resolves to `UNRESOLVED` rather than a guessed verdict.
 - The frontend depends on the deployed Studionet receipt shape and will fail closed if explicit finality or execution success is absent.
-- The accepted release contract and live proof matrix exist; public hosting and user-owned E2E evidence do not exist yet.
+- The accepted release contract exists; the expanded live proof matrix, public hosting, and user-owned E2E evidence are not complete yet.
