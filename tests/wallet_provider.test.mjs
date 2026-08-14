@@ -69,12 +69,34 @@ test("registry rejects malformed announcements and deduplicates UUID plus provid
   const first = fakeProvider();
   const replacement = fakeProvider();
   assert.equal(registry.announce({ info: { uuid: "not-a-uuid", name: "Bad", rdns: "org.bad" }, provider: first }), false);
+  assert.equal(
+    registry.announce({
+      info: { uuid: "00000000-0000-1000-8000-000000000001", name: "UUIDv1", rdns: "org.uuid.v1" },
+      provider: first,
+    }),
+    false,
+  );
   registry.announce(detail("same-uuid", first, "First name"));
   registry.announce(detail("same-uuid", replacement, "Updated name"));
   registry.announce(detail("new-uuid", replacement, "Same object"));
   assert.equal(registry.options().length, 1);
   assert.equal(registry.options()[0].info.uuid, detail("new-uuid", replacement).info.uuid);
   assert.equal(registry.options()[0].provider, replacement);
+});
+
+test("registry normalizes UUIDv4 case before deduplicating", () => {
+  const registry = createProviderRegistry(null);
+  const first = fakeProvider();
+  const replacement = fakeProvider();
+  const lower = detail("case", first);
+  registry.announce(lower);
+  registry.announce({
+    info: { ...lower.info, uuid: lower.info.uuid.toUpperCase(), name: "Updated" },
+    provider: replacement,
+  });
+  assert.equal(registry.options().length, 1);
+  assert.equal(registry.options()[0].provider, replacement);
+  assert.equal(registry.options()[0].info.uuid, lower.info.uuid);
 });
 
 test("legacy provider is bounded fallback and disappears after first valid announcement", () => {

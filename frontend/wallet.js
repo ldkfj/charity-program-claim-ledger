@@ -9,7 +9,7 @@ export const STUDIONET_ADD_PARAMS = Object.freeze({
 });
 
 const ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FOCUSABLE_SELECTOR = [
   "button:not([disabled])",
   "[href]",
@@ -38,8 +38,8 @@ export function normalizeAnnouncement(detail) {
   const uuid = cleanText(detail?.info?.uuid, 200);
   const name = cleanText(detail?.info?.name, 100);
   const rdns = cleanText(detail?.info?.rdns, 200);
-  if (!uuid || !UUID_PATTERN.test(uuid) || !name || !rdns || !isInjectedProvider(detail?.provider)) return null;
-  return { info: { uuid, name, rdns }, provider: detail.provider };
+  if (!uuid || !UUID_V4_PATTERN.test(uuid) || !name || !rdns || !isInjectedProvider(detail?.provider)) return null;
+  return { info: { uuid: uuid.toLowerCase(), name, rdns }, provider: detail.provider };
 }
 
 export function createProviderRegistry(legacyProvider) {
