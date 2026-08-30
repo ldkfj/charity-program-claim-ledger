@@ -15,6 +15,7 @@
 - Selected Studio account, deployer, upgrader, and registrant: `0xeF5D2119416A2f5afa35dCFA209766EFC1BE5902`
 - Deployment: `0x615176e7d84a8fb30d74942dbf4a3d4f5c0f478fbc8bdb865e38d57ba17c005d` → `0x378de5720F632c4F058f5eFe97464b1ED872c6a9`; Explorer `FINALIZED`, GenVM `SUCCESS`, consensus `Accepted`, five initial validators.
 - Source readback: explorer Data tab contains the deployed contract source; local source SHA-256 is `0ECB1D0912B333E17197F07A0B645C779BBFF8F2A4DF637A6345D02F4B7F37CF`.
+- Registration evidence bound to tx `0x6fe0fcefd154939a6c782ae6001e8b5d87301e5ab8af35c40baab1635967d440`: publication URL `https://raw.githubusercontent.com/ldkfj/charity-program-claim-ledger/main/README.md`; exact frozen claim text `Charity Program Claim Ledger freezes a public charity claim and records how the exact IRS Form 990 filing supports, qualifies, or contradicts it.` The fetched publication contains that exact text, and authoritative claim 1 readback returned the same URL and text.
 
 | Case | Evidence | Result |
 |---|---|---|
