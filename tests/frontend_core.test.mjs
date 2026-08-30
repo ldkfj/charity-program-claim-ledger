@@ -17,9 +17,10 @@ import {
 
 const ADDRESS = "0x1111111111111111111111111111111111111111";
 
-test("contract address validation rejects placeholders and malformed input", () => {
+test("contract address validation accepts the verified release and rejects placeholders", () => {
   assert.equal(isContractAddress(ADDRESS), true);
-  assert.equal(isContractAddress(RELEASE_CONTRACT_ADDRESS), false);
+  assert.equal(isContractAddress(RELEASE_CONTRACT_ADDRESS), true);
+  assert.equal(RELEASE_CONTRACT_ADDRESS, "0x378de5720F632c4F058f5eFe97464b1ED872c6a9");
   assert.equal(isContractAddress("0x0000"), false);
   assert.equal(isContractAddress("YOUR_CONTRACT_ADDRESS"), false);
 });

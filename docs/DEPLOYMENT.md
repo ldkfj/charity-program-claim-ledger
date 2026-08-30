@@ -1,12 +1,30 @@
 # Deployment and Recovery Record
 
-> Current status: grader remediation is pending fresh deployment and exact-revision review. The deployment, live-transaction, hosting, and hashes below are historical evidence for the pre-remediation revision. The current source adds exact-text public-claim evidence binding and original-registrant-only retry authorization.
+> Current status: fresh remediation deployment and Studio E2E are complete. The final exact-revision post-deployment review remains the submission checkpoint. Historical evidence is kept below and is explicitly labeled.
 
-## Current remediation PRE_DEPLOY package
+## Current remediation verified package
 
 - Contract source SHA-256: `0ECB1D0912B333E17197F07A0B645C779BBFF8F2A4DF637A6345D02F4B7F37CF`
-- Selected Studio deployer/upgrader for the forthcoming deployment: `0xeF5D2119416A2f5afa35dCFA209766EFC1BE5902`
-- Deployment transaction and contract address: not yet created for this revision
+- Selected Studio deployer/upgrader: `0xeF5D2119416A2f5afa35dCFA209766EFC1BE5902`
+- Deployment transaction: `0x615176e7d84a8fb30d74942dbf4a3d4f5c0f478fbc8bdb865e38d57ba17c005d`
+- Release contract: `0x378de5720F632c4F058f5eFe97464b1ED872c6a9`
+- Explorer: https://explorer-studio.genlayer.com/address/0x378de5720F632c4F058f5eFe97464b1ED872c6a9
+
+## Current remediation Studionet live evidence
+
+- Selected Studio account, deployer, upgrader, and registrant: `0xeF5D2119416A2f5afa35dCFA209766EFC1BE5902`
+- Deployment: `0x615176e7d84a8fb30d74942dbf4a3d4f5c0f478fbc8bdb865e38d57ba17c005d` → `0x378de5720F632c4F058f5eFe97464b1ED872c6a9`; Explorer `FINALIZED`, GenVM `SUCCESS`, consensus `Accepted`, five initial validators.
+- Source readback: explorer Data tab contains the deployed contract source; local source SHA-256 is `0ECB1D0912B333E17197F07A0B645C779BBFF8F2A4DF637A6345D02F4B7F37CF`.
+
+| Case | Evidence | Result |
+|---|---|---|
+| Register claim 1 `0x6fe0fcefd154939a6c782ae6001e8b5d87301e5ab8af35c40baab1635967d440` | `FINALIZED/SUCCESS`; caller and registrant `0xeF5D2119416A2f5afa35dCFA209766EFC1BE5902`; public URL and exact claim text stored | PASS |
+| Assess claim 1 `0x6c5db335f8daae6fd7091930e33cfd2c0059004d26c34fd7d05997188bc2e004` | `FINALIZED/SUCCESS`; bound filing returned unavailable, so readback became `UNRESOLVED` rather than a verdict | PASS / FAIL-CLOSED |
+| Authorized retry `0x10a3049429c7bf3a144853cb083cebf660b91650834470743753033ed8bdc6d0` | `FINALIZED/SUCCESS`; original registrant retry intent; retries `0 → 1`, state remains `UNRESOLVED` | PASS |
+| Unauthorized retry `0x9dd3007f894a9bbcb24a8e0157e450f228e04514f538060e166a7263279aee9` | `FINALIZED`; caller `0x34b92E6553eaCA11A00A9d86d75d8a7881779D78`; GenVM `ERROR`; retry counter unchanged | PASS / REJECTED |
+| Replay retry intent `0xa57d5fc335874f808ef2fcc6562f424a4605793e01752c8d3f612f9c2a939c6b` | `FINALIZED/SUCCESS`; same registrant and prior retry intent; readback retries remains `1` | PASS / IDEMPOTENT |
+
+Authoritative claim readback after the matrix: claim count `1`; claim 1 is `UNRESOLVED`, `verdict=UNRESOLVED`, `retries=1`, registrant `0xeF5D2119416A2f5afa35dCFA209766EFC1BE5902`, and the stored publication URL is the submitted HTTPS URL. The explorer exposes the deployment and call `from` address; Studio wallet selection and the contract execution context used the same selected account.
 
 ## Historical pre-remediation PRE_DEPLOY classification
 

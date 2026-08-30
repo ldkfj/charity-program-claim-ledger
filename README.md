@@ -2,7 +2,17 @@
 
 Charity Program Claim Ledger freezes a public charity claim and records how the exact IRS Form 990 filing supports, qualifies, or contradicts it.
 
-> Grader remediation in progress: the current source additionally requires a public HTTPS claim URL whose fetched content contains the exact frozen claim, and permits retry only to the original registrant. The links and deployment evidence below describe the prior pre-remediation revision until a fresh deployment and review replace them.
+> Current release: the contract requires a public HTTPS claim URL whose fetched content contains the exact frozen claim, and permits retry only to the original registrant.
+
+## Current verified release
+
+- Live app: https://charity-program-claim-ledger.vercel.app
+- Studionet contract: `0x378de5720F632c4F058f5eFe97464b1ED872c6a9`
+- Explorer: https://explorer-studio.genlayer.com/address/0x378de5720F632c4F058f5eFe97464b1ED872c6a9
+- Deployment transaction: `0x615176e7d84a8fb30d74942dbf4a3d4f5c0f478fbc8bdb865e38d57ba17c005d`
+- Selected Studio deployer/upgrader: `0xeF5D2119416A2f5afa35dCFA209766EFC1BE5902`
+- Contract source SHA-256: `0ECB1D0912B333E17197F07A0B645C779BBFF8F2A4DF637A6345D02F4B7F37CF`
+- Network: Studionet, chain ID `61999`
 
 ## Historical pre-remediation links
 
@@ -65,7 +75,7 @@ Prerequisites already used for this revision are Node.js 22, Python 3.13, and an
 npm run serve
 ```
 
-Open `http://localhost:4173/frontend/` and use public lookup or explicitly choose a wallet for writes. No verified release address is preloaded; enter the current Studionet deployment address. No `.env` file is required.
+Open `http://localhost:4173/frontend/` and use public lookup or explicitly choose a wallet for writes. The current verified Studionet deployment address is preloaded; no `.env` file is required.
 
 ## Tests and verification
 
@@ -80,7 +90,7 @@ $env:GENVM_VERSION='v0.3.0-rc7'
 genvm-lint check contracts/charity_claim_ledger.py --json
 ```
 
-Current local result: 38 contract behavior tests passed, 30 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The current remediation revision is not deployed yet; the deployment and live matrix below are historical pre-remediation evidence.
+Current local result: 38 contract behavior tests passed, 30 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The current release is deployed and its live proof matrix is recorded in `docs/DEPLOYMENT.md`.
 
 ## Historical pre-remediation deployment
 
