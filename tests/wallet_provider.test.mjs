@@ -360,6 +360,12 @@ test("registration keeps its form reference across the async wallet write", () =
   assert.doesNotMatch(source, /event\.currentTarget\.reset\(\);/);
 });
 
+test("desktop lookup results are not covered by a sticky search form", () => {
+  const styles = readFileSync(new URL("../frontend/styles.css", import.meta.url), "utf8");
+  assert.match(styles, /\.contract-form\s*\{\s*position:\s*sticky;/);
+  assert.doesNotMatch(styles, /\.search-form,\s*\.contract-form\s*\{\s*position:\s*sticky;/);
+});
+
 test("wallet controls live in the masthead before main content", () => {
   const html = readFileSync(new URL("../frontend/index.html", import.meta.url), "utf8");
   const masthead = html.indexOf('<header class="masthead">');

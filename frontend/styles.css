@@ -544,7 +544,6 @@ dialog::backdrop {
     grid-template-columns: minmax(15rem, 4fr) minmax(0, 8fr);
   }
 
-  .search-form,
   .contract-form {
     position: sticky;
     inset-block-start: var(--space-xl);
