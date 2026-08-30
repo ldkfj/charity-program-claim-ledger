@@ -4,7 +4,7 @@
 
 ## Current remediation PRE_DEPLOY package
 
-- Exact commit: `1563684765aa05e23aff00cede33aa94b5f19ccd`
+- Exact commit: `3cc0dc01ef914c975af87aad40d215a10b33a462`
 - Contract source SHA-256: `0ECB1D0912B333E17197F07A0B645C779BBFF8F2A4DF637A6345D02F4B7F37CF`
 - Selected Studio deployer/upgrader for the forthcoming deployment: `0x09Cdd3BeE61e0080cBD00ad61Bc1b44D3f1F289a`
 - Deployment transaction and contract address: not yet created for this revision
