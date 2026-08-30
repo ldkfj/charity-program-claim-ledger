@@ -120,6 +120,7 @@
             <dl class="facts" id="claim-facts"></dl>
             <p id="claim-explanation"></p>
             <div class="source-links">
+              <a id="publication-link" target="_blank" rel="noreferrer">Open public claim</a>
               <a id="filing-link" target="_blank" rel="noreferrer">Open IRS filing</a>
               <a id="crosscheck-link" target="_blank" rel="noreferrer">Open filing cross-check</a>
             </div>
@@ -171,11 +172,16 @@
                     <input id="claimed-bps" name="claimedBps" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="7000" />
                     <p class="field-note">7000 means 70.00%. Named-program scope must use 0.</p>
                   </div>
+                  <div class="field">
+                    <label for="publication-url">Public claim URL</label>
+                    <input id="publication-url" name="publicationUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://charity.example/claim" />
+                    <p class="field-note">HTTPS page where the exact claim text is publicly published.</p>
+                  </div>
                 </div>
                 <div class="field">
                   <label for="claim-copy">Exact public claim</label>
                   <textarea id="claim-copy" name="claimText" minlength="12" maxlength="600" placeholder="Paste the exact claim to freeze…"></textarea>
-                  <p class="field-note">12–600 characters. Source text is treated as untrusted evidence.</p>
+                  <p class="field-note">12–600 characters. The contract requires this exact text in the bound publication.</p>
                 </div>
                 <button class="button primary" type="submit">Register claim</button>
               </form>
@@ -189,7 +195,7 @@
                 <div class="field">
                   <label for="assess-claim-id">Claim ID</label>
                   <input id="assess-claim-id" name="claimId" inputmode="numeric" autocomplete="off" placeholder="1" />
-                  <p class="field-note">Retry is available only after authoritative readback shows UNRESOLVED.</p>
+                  <p class="field-note">Only the original registrant can consume the two retry attempts.</p>
                 </div>
                 <div class="button-row">
                   <button class="button primary" name="action" value="assess" type="submit">Assess claim</button>

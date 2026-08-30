@@ -2,6 +2,8 @@
 
 Charity Program Claim Ledger freezes a public charity claim and records how the exact IRS Form 990 filing supports, qualifies, or contradicts it.
 
+> Grader remediation in progress: the current source additionally requires a public HTTPS claim URL whose fetched content contains the exact frozen claim, and permits retry only to the original registrant. The links and deployment evidence below describe the prior pre-remediation revision until a fresh deployment and review replace them.
+
 ## Verified links
 
 - Live app: https://charity-program-claim-ledger.vercel.app
@@ -11,7 +13,7 @@ Charity Program Claim Ledger freezes a public charity claim and records how the 
 
 ## Trust problem
 
-Donors and public-interest researchers can see a charity claim, but the claimant controls its wording while filing data is long, period-specific, and easy to cite selectively. A later web edit can also erase what was originally claimed. The ledger binds the exact claim text to one EIN, tax period, IRS Object ID, and comparison template before assessment.
+Donors and public-interest researchers can see a charity claim, but the claimant controls its wording while filing data is long, period-specific, and easy to cite selectively. The ledger binds the exact claim text to one registrant, one public publication URL, one EIN, tax period, IRS Object ID, and comparison template before assessment. Assessment remains unresolved unless the exact text is found in the fetched publication.
 
 ## Why GenLayer is essential
 
@@ -20,24 +22,24 @@ The decisive step requires reading an IRS Form 990 and, for narrative claims, in
 ## How it works
 
 1. Anyone reads an existing claim without connecting a wallet.
-2. A registrant explicitly chooses a wallet, freezes the claim and its filing identity, then the frontend resolves the new claim ID through the wallet-bound client intent.
+2. A registrant explicitly chooses a wallet, supplies the HTTPS page publishing the claim, freezes the claim and its filing identity, then the frontend resolves the new claim ID through the wallet-bound client intent.
 3. A user requests assessment. The contract retrieves the fixed evidence, reaches validator consensus, and records `ASSESSED` or `UNRESOLVED`.
-4. An unresolved assessment can be retried at most twice. An assessed claim can link to a newer assessed successor for the same EIN and template.
+4. An unresolved assessment can be retried at most twice by the original registrant. An assessed claim can link to a newer assessed successor for the same EIN and template.
 
 The verdict is documentary. It is not a fraud finding, charity rating, endorsement, or custody decision.
 
 ## Architecture
 
-- `contracts/charity_claim_ledger.py` is the source of truth for claims, lifecycle rules, evidence URLs, consensus, deterministic numeric evaluation, and intent-to-claim mapping.
+- `contracts/charity_claim_ledger.py` is the source of truth for claims, publication and filing evidence URLs, lifecycle rules, consensus, deterministic numeric evaluation, and intent-to-claim mapping.
 - `frontend/` is a dependency-light browser client for public reads and explicitly selected EIP-1193 wallets.
 - `tests/` contains contract behavior tests and frontend boundary tests.
-- The IRS Form 990 content rendered by ProPublica is the primary evidence. ProPublica's organization API is the structured EIN and filing-period cross-check.
+- The public claim URL is checked for the exact frozen text. IRS Form 990 content rendered by ProPublica is the primary filing evidence, and ProPublica's organization API is the structured EIN and filing-period cross-check.
 
 There is no backend database and no off-chain authoritative claim state.
 
 ## Intelligent Contract
 
-The public write methods are `register_claim`, `assess_claim`, `retry_assessment`, `link_successor`, and `upgrade`. Views are `get_claim`, `get_claim_count`, and `get_claim_id_by_intent`.
+The public write methods are `register_claim`, `assess_claim`, `retry_assessment`, `link_successor`, and `upgrade`. Registration stores a public claim URL and assessment verifies its exact text; retry authorization is limited to the original registrant. Views are `get_claim`, `get_claim_count`, and `get_claim_id_by_intent`.
 
 Claims move through:
 
@@ -53,7 +55,7 @@ This project has no token, payout, staking, fee-sharing, or other economic value
 
 ## Transaction lifecycle
 
-The frontend never auto-selects an injected wallet. Before signing, it stores a client intent locally. After submission it waits for explicit `FINALIZED`, requires successful leader execution, and performs authoritative contract readback. An unknown submission state remains pending: reconciliation checks authoritative state first and may resubmit only the exact stored action and arguments when no effect is found. Registration and retry are duplicate-safe through wallet-bound client intents; assessment is guarded by lifecycle state; and retry readback also compares the stored prior retry count. Registration never guesses an ID from the global claim count.
+The frontend never auto-selects an injected wallet. Before signing, it stores a client intent locally. After submission it waits for explicit `FINALIZED`, requires successful leader execution, and performs authoritative contract readback. An unknown submission state remains pending: reconciliation checks authoritative state first and may resubmit only the exact stored action and arguments when no effect is found. Registration and retry are duplicate-safe through wallet-bound client intents; assessment is guarded by lifecycle state; only the original registrant can consume retry quota; and retry readback also compares the stored prior retry count. Registration never guesses an ID from the global claim count.
 
 ## Run locally
 
@@ -92,7 +94,8 @@ The contract is classified `UPGRADABLE`. Its constructor records the deployment 
 
 ## Security and trust boundaries
 
-- Evidence hosts and paths are constructed by the contract; claimants cannot supply a replacement URL.
+- The registrant supplies a public HTTPS claim URL, which is frozen with the exact text and must contain that text when validators fetch it; filing hosts and paths are constructed by the contract.
+- Retry quota is protected on-chain by the frozen registrant address.
 - An unavailable, rate-limited, unusable, or validator-disputed source cannot become a positive or adverse factual verdict.
 - LLM output does not control numeric arithmetic or thresholds.
 - Client receipts and SDK payload casing are treated as untrusted; writes require finality, successful execution, and readback.

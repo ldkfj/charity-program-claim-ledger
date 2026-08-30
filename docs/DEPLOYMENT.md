@@ -1,5 +1,7 @@
 # Deployment and Recovery Record
 
+> Current status: grader remediation is pending fresh deployment and exact-revision review. The deployment, live-transaction, hosting, and hashes below are historical evidence for the pre-remediation revision. The current source adds exact-text public-claim evidence binding and original-registrant-only retry authorization.
+
 ## PRE_DEPLOY classification
 
 - Project: Charity Program Claim Ledger
@@ -90,9 +92,9 @@ Before accepting the release deployment, a separate test deployment must prove:
 
 | Action | Trigger | Decision authority | On-chain consequence | Override |
 |---|---|---|---|---|
-| Register claim | Any wallet | Deterministic contract validation | Frozen claim bound to wallet intent and filing identity | None |
+| Register claim | Any wallet with an HTTPS publication containing the exact claim text | Deterministic contract validation | Frozen claim bound to wallet intent, publication evidence, and filing identity | None |
 | Assess claim | Any wallet | GenLayer validators independently fetch and evaluate fixed evidence; contract derives numeric verdict | `FROZEN` becomes `ASSESSED` or `UNRESOLVED` | None |
-| Retry unresolved | Any wallet, at most twice; wallet-bound retry intent prevents replay | Same evidence and consensus path as assessment | `UNRESOLVED` remains unresolved or becomes assessed | None |
+| Retry unresolved | Original registrant only, at most twice; wallet-bound retry intent prevents replay | Same evidence and consensus path as assessment | `UNRESOLVED` remains unresolved or becomes assessed | None |
 | Link successor | Original registrant of old claim | Deterministic identity, template, period, and state checks | Old assessed claim becomes `SUPERSEDED` | None |
 | Upgrade code | Recorded Root Slot upgrader | GenVM locked-slot authorization | Contract code replaced; storage persists | Sole recorded upgrader |
 

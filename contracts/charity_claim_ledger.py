@@ -42,6 +42,7 @@ class Claim:
     object_id: str
     template: str
     claim_text: str
+    publication_url: str
     claimed_bps: u256
     state: str
     verdict: str
@@ -104,6 +105,16 @@ class CharityProgramClaimLedger(gl.Contract):
         if template == TEMPLATE_NAMED and claimed_bps != 0:
             raise gl.vm.UserError("Named-program claims must use 0 basis points")
 
+    def _validate_publication_url(self, publication_url: str) -> None:
+        if (
+            len(publication_url) < 12
+            or len(publication_url) > 512
+            or not publication_url.startswith("https://")
+            or any(char.isspace() for char in publication_url)
+            or publication_url.find("/", 8) < 0
+        ):
+            raise gl.vm.UserError("Publication URL must be an HTTPS URL")
+
     def _validate_intent_id(self, client_intent_id: str) -> None:
         if len(client_intent_id) < 16 or len(client_intent_id) > 80:
             raise gl.vm.UserError("Client intent ID must contain 16 to 80 characters")
@@ -128,10 +139,12 @@ class CharityProgramClaimLedger(gl.Contract):
         template: str,
         claim_text: str,
         claimed_bps: u256,
+        publication_url: str,
         client_intent_id: str,
     ) -> u256:
         self._validate_identifiers(ein, tax_period, object_id)
         self._validate_claim_input(template, claim_text, claimed_bps)
+        self._validate_publication_url(publication_url)
         self._validate_intent_id(client_intent_id)
 
         sender = gl.message.sender_address
@@ -148,6 +161,7 @@ class CharityProgramClaimLedger(gl.Contract):
             object_id=object_id,
             template=template,
             claim_text=claim_text.strip(),
+            publication_url=publication_url.strip(),
             claimed_bps=claimed_bps,
             state=STATE_FROZEN,
             verdict="",
@@ -171,6 +185,7 @@ class CharityProgramClaimLedger(gl.Contract):
         object_id = claim.object_id
         template = claim.template
         claim_text = claim.claim_text
+        publication_url = claim.publication_url
         claimed_bps = int(claim.claimed_bps)
         filing_url = claim.filing_url
         crosscheck_url = claim.crosscheck_url
@@ -184,6 +199,16 @@ class CharityProgramClaimLedger(gl.Contract):
                     return self._unresolved_result("The filing cross-check could not be retrieved")
 
                 crosscheck = api_response.body.decode("utf-8")
+                publication_response = gl.nondet.web.request(publication_url, method="GET")
+                if publication_response.status == 429 or publication_response.status >= 500:
+                    return self._unresolved_result("The claim publication was temporarily unavailable")
+                if publication_response.status < 200 or publication_response.status >= 300:
+                    return self._unresolved_result("The claim publication could not be retrieved")
+                publication_text = publication_response.body.decode("utf-8")
+                if claim_text not in publication_text:
+                    return self._unresolved_result(
+                        "The frozen claim was not found in the bound publication"
+                    )
                 filing_response = gl.nondet.web.request(filing_url, method="GET")
                 if filing_response.status == 429 or filing_response.status >= 500:
                     return self._unresolved_result("A bound evidence source was temporarily unavailable")
@@ -217,6 +242,7 @@ class CharityProgramClaimLedger(gl.Contract):
                     object_id,
                     template,
                     claim_text,
+                    publication_url,
                     claimed_bps,
                     self._bounded_fragment(
                         filing_html,
@@ -374,6 +400,7 @@ class CharityProgramClaimLedger(gl.Contract):
         object_id: str,
         template: str,
         claim_text: str,
+        publication_url: str,
         claimed_bps: int,
         filing_text: str,
         schedule_o_text: str,
@@ -390,6 +417,7 @@ IRS Object ID: {object_id}
 Template: {template}
 Claimed basis points: {claimed_bps}
 Claim text: {claim_text}
+Publication URL: {publication_url}
 
 RULES
 - The contract already verified the EIN and tax period from the bound filing and cross-check.
@@ -561,6 +589,9 @@ PROPUBLICA CROSS-CHECK JSON:
     @gl.public.write
     def retry_assessment(self, claim_id: u256, client_intent_id: str) -> None:
         self._validate_intent_id(client_intent_id)
+        claim = self._require_claim(claim_id)
+        if gl.message.sender_address != claim.registrant:
+            raise gl.vm.UserError("Only the original registrant can retry a claim")
         sender_intents = self.retry_claim_ids_by_intent.get_or_insert_default(
             gl.message.sender_address
         )
@@ -568,7 +599,6 @@ PROPUBLICA CROSS-CHECK JSON:
             if sender_intents[client_intent_id] != claim_id:
                 raise gl.vm.UserError("Retry intent was already used for another claim")
             return
-        claim = self._require_claim(claim_id)
         if claim.state != STATE_UNRESOLVED:
             raise gl.vm.UserError("Only an unresolved claim can be retried")
         if claim.retries >= 2:
@@ -604,6 +634,7 @@ PROPUBLICA CROSS-CHECK JSON:
             "object_id": claim.object_id,
             "template": claim.template,
             "claim_text": claim.claim_text,
+            "publication_url": claim.publication_url,
             "claimed_bps": claim.claimed_bps,
             "state": claim.state,
             "verdict": claim.verdict,

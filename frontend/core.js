@@ -19,6 +19,7 @@ export function registrationArgs(form) {
   const template = String(form.template || "");
   const claimText = String(form.claimText || "").trim();
   const claimedBps = String(form.claimedBps || "").trim();
+  const publicationUrl = String(form.publicationUrl || "").trim();
 
   if (!/^\d{9}$/.test(ein)) throw new Error("EIN must contain exactly 9 digits.");
   if (!/^\d{6}$/.test(taxPeriod)) throw new Error("Tax period must use YYYYMM.");
@@ -31,13 +32,16 @@ export function registrationArgs(form) {
   if (claimText.length < 12 || claimText.length > 600) {
     throw new Error("Claim text must contain 12–600 characters.");
   }
+  if (!/^https:\/\/[^\s/]+(?:\/[^\s]*)?$/.test(publicationUrl) || publicationUrl.length > 512) {
+    throw new Error("Publication URL must be a valid HTTPS URL.");
+  }
   if (!/^\d+$/.test(claimedBps)) throw new Error("Claimed basis points must be a whole number.");
   const bps = BigInt(claimedBps);
   if (bps > 10000n) throw new Error("Claimed basis points cannot exceed 10000.");
   if (template === "NAMED_PROGRAM_SCOPE" && bps !== 0n) {
     throw new Error("Named-program scope must use 0 basis points.");
   }
-  return [ein, taxPeriod, objectId, template, claimText, bps];
+  return [ein, taxPeriod, objectId, template, claimText, bps, publicationUrl];
 }
 
 export function toDisplay(value) {
@@ -53,7 +57,7 @@ export function normalizeClaim(raw) {
   const required = [
     "claim_id", "registrant", "ein", "tax_period", "object_id", "template",
     "claim_text", "claimed_bps", "state", "verdict", "numerator", "denominator",
-    "calculated_bps", "explanation", "filing_url", "crosscheck_url", "retries",
+    "calculated_bps", "explanation", "publication_url", "filing_url", "crosscheck_url", "retries",
     "successor_id", "client_intent_id",
   ];
   for (const key of required) {
@@ -90,7 +94,7 @@ export function parsePendingIntent(serialized) {
   if (!serialized) return null;
   const value = JSON.parse(serialized);
   const arity = {
-    register_claim: 7,
+    register_claim: 8,
     assess_claim: 1,
     retry_assessment: 2,
     link_successor: 2,
@@ -111,7 +115,7 @@ export function parsePendingIntent(serialized) {
   if (
     value.action === "register_claim" &&
     (!isContractAddress(value.expected.registrant) ||
-      value.expected.clientIntentId !== value.args[6])
+      value.expected.clientIntentId !== value.args[7])
   ) {
     throw new Error("The saved registration intent is invalid.");
   }

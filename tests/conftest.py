@@ -110,10 +110,13 @@ class FakeWeb:
     filing_body = DEFAULT_FILING_BODY
     schedule_body = b'<span id="x/ExplanationTxt[1]">Schedule O facts</span>'
     rendered_text = "Form 990 filing text"
+    publication_body = b"The charity spent 70% on program services."
 
     @classmethod
     def request(cls, url, method="GET"):
-        if url.endswith("IRS990ScheduleO"):
+        if "charity.example" in url:
+            body = cls.publication_body
+        elif url.endswith("IRS990ScheduleO"):
             body = cls.schedule_body
         elif "/full_text/" in url:
             body = cls.filing_body
@@ -192,5 +195,6 @@ def ledger(contract_module):
     FakeWeb.filing_body = DEFAULT_FILING_BODY
     FakeWeb.schedule_body = b'<span id="x/ExplanationTxt[1]">Schedule O facts</span>'
     FakeWeb.rendered_text = "Form 990 filing text"
+    FakeWeb.publication_body = b"The charity spent 70% on program services."
     FakeNondet.llm_results = []
     return contract

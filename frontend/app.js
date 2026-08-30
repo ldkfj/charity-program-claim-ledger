@@ -77,6 +77,7 @@ function renderClaim(raw) {
   byId("claim-verdict").textContent = claim.verdict || claim.state;
   byId("claim-text").textContent = claim.claim_text;
   byId("claim-explanation").textContent = claim.explanation || "Assessment has not been completed.";
+  byId("publication-link").href = claim.publication_url;
   byId("filing-link").href = claim.filing_url;
   byId("crosscheck-link").href = claim.crosscheck_url;
 
@@ -152,6 +153,7 @@ async function authoritativeReadback(intent) {
       claim.state !== "FROZEN" ||
       claim.ein !== intent.args[0] ||
       claim.object_id !== intent.args[2] ||
+      claim.publication_url !== intent.args[6] ||
       claim.client_intent_id !== intent.expected.clientIntentId
     ) {
       throw new Error("New claim readback does not match the frozen registration intent.");

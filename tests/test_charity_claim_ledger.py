@@ -20,6 +20,7 @@ def register(
         template,
         "The charity spent 70% on program services.",
         bps,
+        "https://charity.example/claims/program-share",
         intent or f"intent-{period}-1234567890",
     )
 
@@ -50,6 +51,7 @@ def test_register_freezes_identifiers_and_constructs_evidence_urls(ledger):
         "202441239349300001/IRS990"
     )
     assert claim["crosscheck_url"].endswith("/organizations/123456789.json")
+    assert claim["publication_url"] == "https://charity.example/claims/program-share"
     assert ledger.get_claim_id_by_intent(claim["registrant"], "intent-202312-1234567890") == claim_id
 
 
@@ -105,6 +107,7 @@ def test_registration_rejects_malformed_filing_identity(
             "PROGRAM_SERVICE_SHARE",
             "The charity spent 70% on program services.",
             7000,
+            "https://charity.example/claims/program-share",
             "intent-1234567890abcdef",
         )
 
@@ -114,6 +117,20 @@ def test_registration_rejects_replayed_client_intent(ledger):
     register(ledger, intent=replayed)
     with pytest.raises(Exception, match="already used"):
         register(ledger, period="202212", intent=replayed)
+
+
+def test_registration_rejects_non_https_publication(ledger):
+    with pytest.raises(Exception, match="Publication URL"):
+        ledger.register_claim(
+            "123456789",
+            "202312",
+            "202441239349300001",
+            "PROGRAM_SERVICE_SHARE",
+            "The charity spent 70% on program services.",
+            7000,
+            "http://charity.example/claims/program-share",
+            "intent-invalid-publication-1234",
+        )
 
 
 def test_assessment_uses_rederived_numeric_facts_not_llm_verdict_or_math(ledger):
@@ -126,6 +143,17 @@ def test_assessment_uses_rederived_numeric_facts_not_llm_verdict_or_math(ledger)
     assert claim["verdict"] == "SUPPORTED_BY_FILING"
     assert claim["calculated_bps"] == 7000
     assert "matches the bound filing" in claim["explanation"]
+
+
+def test_assessment_requires_exact_claim_text_in_bound_publication(ledger):
+    claim_id = register(ledger)
+    FakeWeb.publication_body = b"A different statement was published."
+
+    ledger.assess_claim(claim_id)
+
+    claim = ledger.get_claim(claim_id)
+    assert claim["state"] == "UNRESOLVED"
+    assert "not found in the bound publication" in claim["explanation"]
 
 
 @pytest.mark.parametrize("bad_number", [2**256, -1, True, "7"])
@@ -246,6 +274,18 @@ def test_retry_replay_with_same_intent_is_idempotent(ledger):
     ledger.retry_assessment(claim_id, "retry-idempotent-123456")
 
     assert ledger.get_claim(claim_id)["retries"] == 1
+
+
+def test_only_original_registrant_can_consume_retry_quota(ledger):
+    claim_id = register(ledger)
+    FakeWeb.response_status = 429
+    ledger.assess_claim(claim_id)
+
+    MESSAGE.sender_address = Address("0x2222222222222222222222222222222222222222")
+    with pytest.raises(Exception, match="original registrant"):
+        ledger.retry_assessment(claim_id, "retry-unauthorized-123456")
+
+    assert ledger.get_claim(claim_id)["retries"] == 0
 
 
 def test_successor_requires_same_ein_template_and_newer_assessed_period(ledger):

@@ -38,8 +38,22 @@ test("registrationArgs locks identifier formats and named-program basis points",
     template: "PROGRAM_SERVICE_SHARE",
     claimText: "The charity spent 70% on program services.",
     claimedBps: "7000",
+    publicationUrl: "https://charity.example/claims/program-share",
   });
   assert.equal(args[5], 7000n);
+  assert.equal(args[6], "https://charity.example/claims/program-share");
+  assert.throws(
+    () => registrationArgs({
+      ein: "123456789",
+      taxPeriod: "202312",
+      objectId: "202441239349300001",
+      template: "PROGRAM_SERVICE_SHARE",
+      claimText: "The charity spent 70% on program services.",
+      claimedBps: "7000",
+      publicationUrl: "http://charity.example/claims/program-share",
+    }),
+    /valid HTTPS URL/,
+  );
   assert.throws(
     () => registrationArgs({
       ein: "123456789",
@@ -48,6 +62,7 @@ test("registrationArgs locks identifier formats and named-program basis points",
       template: "NAMED_PROGRAM_SCOPE",
       claimText: "The charity operated a named food program.",
       claimedBps: "1",
+      publicationUrl: "https://charity.example/claims/named-program",
     }),
     /must use 0/,
   );
@@ -63,6 +78,18 @@ test("pending intent round-trips bigint args without losing identity", () => {
   const parsed = parsePendingIntent(JSON.stringify(intent));
   assert.equal(parsed.args[0], "7");
   assert.equal(parsed.txHash, null);
+});
+
+test("pending registration preserves the bound publication and intent positions", () => {
+  const intent = makePendingIntent({
+    contractAddress: ADDRESS,
+    action: "register_claim",
+    args: ["123456789", "202312", "202441239349300001", "PROGRAM_SERVICE_SHARE", "The charity spent 70% on program services.", 7000n, "https://charity.example/claims/program-share", "registration-intent-123456"],
+    expected: { registrant: ADDRESS, clientIntentId: "registration-intent-123456" },
+  });
+  const parsed = parsePendingIntent(JSON.stringify(intent));
+  assert.equal(parsed.args[6], "https://charity.example/claims/program-share");
+  assert.equal(parsed.args[7], "registration-intent-123456");
 });
 
 test("pending retry intent preserves the authoritative retry baseline", () => {
@@ -129,7 +156,7 @@ test("normalizeClaim rejects incomplete and unknown-state payloads", () => {
   const full = Object.fromEntries([
     "claim_id", "registrant", "ein", "tax_period", "object_id", "template", "claim_text",
     "claimed_bps", "state", "verdict", "numerator", "denominator", "calculated_bps",
-    "explanation", "filing_url", "crosscheck_url", "retries", "successor_id", "client_intent_id",
+    "explanation", "publication_url", "filing_url", "crosscheck_url", "retries", "successor_id", "client_intent_id",
   ].map((key) => [key, ""]));
   full.state = "MYSTERY";
   assert.throws(() => normalizeClaim(full), /unknown lifecycle state/);
