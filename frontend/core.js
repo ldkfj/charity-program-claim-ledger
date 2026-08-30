@@ -1,6 +1,6 @@
-export const PENDING_KEY = "charity-ledger.pending-write.v1";
-export const CONTRACT_KEY = "charity-ledger.contract-address.v1";
-export const RELEASE_CONTRACT_ADDRESS = "0xa5754435B7411Faa56de25D1311Ff2E3B4356b2B";
+export const PENDING_KEY = "charity-ledger.pending-write.v2";
+export const CONTRACT_KEY = "charity-ledger.contract-address.v2";
+export const RELEASE_CONTRACT_ADDRESS = "";
 
 export function isContractAddress(value) {
   return /^0x[0-9a-fA-F]{40}$/.test(String(value || "").trim());

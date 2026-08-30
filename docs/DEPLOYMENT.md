@@ -2,7 +2,14 @@
 
 > Current status: grader remediation is pending fresh deployment and exact-revision review. The deployment, live-transaction, hosting, and hashes below are historical evidence for the pre-remediation revision. The current source adds exact-text public-claim evidence binding and original-registrant-only retry authorization.
 
-## PRE_DEPLOY classification
+## Current remediation PRE_DEPLOY package
+
+- Exact commit: `1563684765aa05e23aff00cede33aa94b5f19ccd`
+- Contract source SHA-256: `0ECB1D0912B333E17197F07A0B645C779BBFF8F2A4DF637A6345D02F4B7F37CF`
+- Selected Studio deployer/upgrader for the forthcoming deployment: `0x09Cdd3BeE61e0080cBD00ad61Bc1b44D3f1F289a`
+- Deployment transaction and contract address: not yet created for this revision
+
+## Historical pre-remediation PRE_DEPLOY classification
 
 - Project: Charity Program Claim Ledger
 - Submission category: `PROJECT`
@@ -25,11 +32,11 @@
 
 The primary AI selected the Task-local Studio account above after anonymous `PRE_DEPLOY` approval and used it as deployer and Root Slot upgrader. No account, credential, contract address, or deployment evidence from another Task was reused.
 
-## Accepted deployment evidence
+## Historical pre-remediation deployment evidence
 
 The fresh deployment transaction is `FINALIZED`; leader execution is `SUCCESS`; its recorded votes contain three `agree`, two `idle`, and no disagreement; and `from_address` equals the selected deployer. Contract-code readback decodes to exactly 26,893 bytes and the approved SHA-256 above. The earlier addresses `0x07Bca9edBCBEA28A4A3452126832cf5CE7962452`, `0x05FCf32aCa5265D733D4524D4346fDF4277fE100`, `0x18e78e546dEB4ABb28D7B4f306D056E860CE32b6`, and `0x33297B6C682B4FcE63bd0d26fd6842B79FB8a07B` are superseded diagnostic deployments and are not release evidence.
 
-## Studionet live evidence ledger
+## Historical pre-remediation Studionet live evidence ledger
 
 The locked account `0x09Cdd3BeE61e0080cBD00ad61Bc1b44D3f1F289a` acted as deployer, upgrader, registrant, assessor, retry caller, and authorized successor caller. The negative authorization account was `0x458766D23AE2a78a89d09E19D9a06690a5586607`. Every PASS row has terminal receipt classification and authoritative pre/post readback; `3A/2I` means three `agree`, two `idle`, and no disagreement.
 
@@ -118,7 +125,7 @@ If Studionet or its chain state resets, the old address and state cannot be reco
 - live proof matrix for register, assess happy path, unresolved path, retry, successor link, and rejected replay/unauthorized actions;
 - frontend reads and writes against the same accepted Studionet contract.
 
-## Production Vercel E2E evidence
+## Historical pre-remediation production Vercel E2E evidence
 
 - Stable production URL: `https://charity-program-claim-ledger.vercel.app`
 - Locked Vercel target: team `gam9`, project `charity-program-claim-ledger`
@@ -140,7 +147,7 @@ If Studionet or its chain state resets, the old address and state cannot be reco
 
 Two live-browser defects were found and repaired during this matrix: the finality wait envelope was replaced by a canonical transaction read keyed to the original hash, and the receipt classifier was extended to accept the live `txExecutionResult` field plus leader-receipt fallback. Regression coverage now proves both shapes while preserving fail-closed behavior for missing finality or execution data.
 
-## Final submission scorecard candidate
+## Historical pre-remediation final submission scorecard candidate
 
 ```text
 GENLAYER SUBMISSION CATEGORY AND SCORECARD

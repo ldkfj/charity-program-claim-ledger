@@ -4,7 +4,7 @@ Charity Program Claim Ledger freezes a public charity claim and records how the 
 
 > Grader remediation in progress: the current source additionally requires a public HTTPS claim URL whose fetched content contains the exact frozen claim, and permits retry only to the original registrant. The links and deployment evidence below describe the prior pre-remediation revision until a fresh deployment and review replace them.
 
-## Verified links
+## Historical pre-remediation links
 
 - Live app: https://charity-program-claim-ledger.vercel.app
 - Studionet contract: `0xa5754435B7411Faa56de25D1311Ff2E3B4356b2B`
@@ -80,9 +80,9 @@ $env:GENVM_VERSION='v0.3.0-rc7'
 genvm-lint check contracts/charity_claim_ledger.py --json
 ```
 
-Current local result: 32 contract behavior tests passed, 29 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The remediated contract source is deployed with byte-for-byte parity. The complete Studionet contract matrix passed, including invalid input, threshold boundaries, all three templates, replay safety, authorization controls, and isolated upgrade recovery.
+Current local result: 38 contract behavior tests passed, 30 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The current remediation revision is not deployed yet; the deployment and live matrix below are historical pre-remediation evidence.
 
-## Deployment
+## Historical pre-remediation deployment
 
 The release target is Studionet only:
 
@@ -108,4 +108,4 @@ The contract is classified `UPGRADABLE`. Its constructor records the deployment 
 - The Object-ID-bound full-text route, matching organization identity, threshold matrix, all supported templates, negative controls, replay behavior, and isolated upgrade rehearsal passed with terminal receipts and authoritative readback. The pre-release tree passed anonymous `POST_DEPLOY_TEST`; the rewritten final Git identity revision still requires the final exact-revision review before submission.
 - Filing layouts and narrative quality vary; unusable evidence resolves to `UNRESOLVED` rather than a guessed verdict.
 - The frontend depends on the deployed Studionet receipt shape and will fail closed if explicit finality or execution success is absent.
-- The accepted release contract, expanded live proof matrix, public hosting, and user-signed production Vercel E2E evidence are complete.
+- The pre-remediation release contract, expanded live proof matrix, public hosting, and user-signed production Vercel E2E evidence are historical and do not certify the current remediation revision.

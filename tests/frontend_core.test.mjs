@@ -19,7 +19,7 @@ const ADDRESS = "0x1111111111111111111111111111111111111111";
 
 test("contract address validation rejects placeholders and malformed input", () => {
   assert.equal(isContractAddress(ADDRESS), true);
-  assert.equal(isContractAddress(RELEASE_CONTRACT_ADDRESS), true);
+  assert.equal(isContractAddress(RELEASE_CONTRACT_ADDRESS), false);
   assert.equal(isContractAddress("0x0000"), false);
   assert.equal(isContractAddress("YOUR_CONTRACT_ADDRESS"), false);
 });

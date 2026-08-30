@@ -111,18 +111,23 @@ class FakeWeb:
     schedule_body = b'<span id="x/ExplanationTxt[1]">Schedule O facts</span>'
     rendered_text = "Form 990 filing text"
     publication_body = b"The charity spent 70% on program services."
+    publication_status = 200
 
     @classmethod
     def request(cls, url, method="GET"):
         if "charity.example" in url:
             body = cls.publication_body
+            status = cls.publication_status
         elif url.endswith("IRS990ScheduleO"):
             body = cls.schedule_body
+            status = cls.response_status
         elif "/full_text/" in url:
             body = cls.filing_body
+            status = cls.response_status
         else:
             body = cls.crosscheck_body
-        return types.SimpleNamespace(status=cls.response_status, body=body)
+            status = cls.response_status
+        return types.SimpleNamespace(status=status, body=body)
 
     @classmethod
     def render(cls, _url, mode="text"):
@@ -196,5 +201,6 @@ def ledger(contract_module):
     FakeWeb.schedule_body = b'<span id="x/ExplanationTxt[1]">Schedule O facts</span>'
     FakeWeb.rendered_text = "Form 990 filing text"
     FakeWeb.publication_body = b"The charity spent 70% on program services."
+    FakeWeb.publication_status = 200
     FakeNondet.llm_results = []
     return contract

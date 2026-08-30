@@ -156,6 +156,29 @@ def test_assessment_requires_exact_claim_text_in_bound_publication(ledger):
     assert "not found in the bound publication" in claim["explanation"]
 
 
+@pytest.mark.parametrize("publication_status", [404, 500])
+def test_publication_http_failures_fail_closed(ledger, publication_status):
+    claim_id = register(ledger)
+    FakeWeb.publication_status = publication_status
+
+    ledger.assess_claim(claim_id)
+
+    claim = ledger.get_claim(claim_id)
+    assert claim["state"] == "UNRESOLVED"
+    assert claim["retries"] == 0
+
+
+def test_malformed_publication_body_fails_closed(ledger):
+    claim_id = register(ledger)
+    FakeWeb.publication_body = b"\xff"
+
+    ledger.assess_claim(claim_id)
+
+    claim = ledger.get_claim(claim_id)
+    assert claim["state"] == "UNRESOLVED"
+    assert claim["retries"] == 0
+
+
 @pytest.mark.parametrize("bad_number", [2**256, -1, True, "7"])
 def test_untrusted_numbers_outside_strict_u256_become_unresolved(ledger, bad_number):
     claim_id = register(ledger, template="NAMED_PROGRAM_SCOPE", bps=0)
