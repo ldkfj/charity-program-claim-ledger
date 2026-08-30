@@ -65,7 +65,7 @@ Prerequisites already used for this revision are Node.js 22, Python 3.13, and an
 npm run serve
 ```
 
-Open `http://localhost:4173/frontend/` and use public lookup or explicitly choose a wallet for writes. The verified release address is preloaded; no `.env` file is required.
+Open `http://localhost:4173/frontend/` and use public lookup or explicitly choose a wallet for writes. No verified release address is preloaded; enter the current Studionet deployment address. No `.env` file is required.
 
 ## Tests and verification
 
