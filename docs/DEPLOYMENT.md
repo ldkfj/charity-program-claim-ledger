@@ -5,7 +5,7 @@
 ## Current remediation PRE_DEPLOY package
 
 - Contract source SHA-256: `0ECB1D0912B333E17197F07A0B645C779BBFF8F2A4DF637A6345D02F4B7F37CF`
-- Selected Studio deployer/upgrader for the forthcoming deployment: `0x09Cdd3BeE61e0080cBD00ad61Bc1b44D3f1F289a`
+- Selected Studio deployer/upgrader for the forthcoming deployment: `0xeF5D2119416A2f5afa35dCFA209766EFC1BE5902`
 - Deployment transaction and contract address: not yet created for this revision
 
 ## Historical pre-remediation PRE_DEPLOY classification
