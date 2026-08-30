@@ -354,6 +354,12 @@ test("fresh app state stays disconnected and discovery listener precedes provide
   );
 });
 
+test("registration keeps its form reference across the async wallet write", () => {
+  const source = readFileSync(new URL("../frontend/app.js", import.meta.url), "utf8");
+  assert.match(source, /const form = event\.currentTarget;[\s\S]*new FormData\(form\)[\s\S]*form\.reset\(\);/);
+  assert.doesNotMatch(source, /event\.currentTarget\.reset\(\);/);
+});
+
 test("wallet controls live in the masthead before main content", () => {
   const html = readFileSync(new URL("../frontend/index.html", import.meta.url), "utf8");
   const masthead = html.indexOf('<header class="masthead">');

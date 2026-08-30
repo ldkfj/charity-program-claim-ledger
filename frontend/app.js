@@ -378,17 +378,18 @@ byId("search-form").addEventListener("submit", async (event) => {
 
 byId("register-form").addEventListener("submit", async (event) => {
   event.preventDefault();
+  const form = event.currentTarget;
   const button = event.submitter;
   setBusy(button, true, "Registering claim…");
   try {
-    const values = Object.fromEntries(new FormData(event.currentTarget));
+    const values = Object.fromEntries(new FormData(form));
     const clientIntentId = crypto.randomUUID();
     const args = [...registrationArgs(values), clientIntentId];
     await executeWrite("register_claim", args, {
       registrant: selectedAccount,
       clientIntentId,
     });
-    event.currentTarget.reset();
+    form.reset();
   } catch (error) {
     status(writeStatus, error.message, "error");
   } finally {
