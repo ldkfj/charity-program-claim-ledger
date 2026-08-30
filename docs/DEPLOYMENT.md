@@ -150,17 +150,18 @@ If Studionet or its chain state resets, the old address and state cannot be reco
 - Frontend source commit used for live E2E: `78248bc85178d9135db324a905235fe0e2777d5c`
 - Frontend source tree used for live E2E: `250059f725c9041cb831d4233beb7dde49a98026`
 - Evidence-only documentation follow-up is tracked in the GitHub history after that source commit; the exact current Vercel deployment is bound in the final reviewer package from the Vercel dashboard.
+- The stable alias above is the public tested endpoint. The immutable Vercel deployment URL was access-protected by Vercel Login during verification and was not used as the public E2E endpoint.
 - Release contract: `0x378de5720F632c4F058f5eFe97464b1ED872c6a9`
 - External E2E wallet: OKX Wallet `0x7885536194BbD6E1D0A6Ab991aB215CFa9542339` (not the Studio deployer)
 
 | Case | Evidence | Result |
 |---|---|---|
 | Fresh production load/reload | Production deployment was Ready; fresh reload showed `Choose wallet` and `No wallet selected`; the release contract remained preloaded | PASS |
-| Public read without wallet | Claim 2 read from the stable production URL as `FROZEN`, then `UNRESOLVED` after assessment/retry; exact publication and IRS links rendered | PASS |
+| Public read without wallet | Claim 4 read from the stable production URL as `FROZEN`, then `UNRESOLVED` after assessment; exact publication and IRS links rendered | PASS |
 | Explicit provider gate | Chooser was opened explicitly, OKX was selected explicitly, and the selected account/network were shown; no automatic wallet selection occurred after reload | PASS |
 | Register claim 4 on final release | `0x607f579eb90f9083fcd0a78976c497629c7af83c5420fa7915eaa56f4914ac34`; Explorer `FINALIZED/SUCCESS/Accepted`; authoritative readback returned claim 4 `FROZEN` with the exact registrant and client intent | PASS |
-| Assess claim 2 | `0xb51d5390e249e300f71d3bd21178f02ec2b927ea25536caf71878871835185cb`; Explorer `FINALIZED/SUCCESS/Accepted`; authoritative readback returned `UNRESOLVED` with the unavailable-evidence explanation | PASS |
-| Retry unresolved claim 2 | `0x681467fac7964035f7e79d0ebb113e4ac4ef996a1e7ceaf50855fddb20f4d8c4`; Explorer `FINALIZED/SUCCESS/Accepted`; reconcile completed and readback showed retries `0 → 1`, state `UNRESOLVED` | PASS |
+| Assess claim 4 | `0x2f67c6fd4d561d69c9fe58966be54d6c2469ec7a693d69324f45bfb41b4c2285`; Explorer `FINALIZED/SUCCESS/Accepted`; authoritative readback returned `UNRESOLVED` with the unavailable-evidence explanation | PASS |
+| Earlier retry evidence on unchanged frontend code | Claim 2 tx `0x681467fac7964035f7e79d0ebb113e4ac4ef996a1e7ceaf50855fddb20f4d8c4`; Explorer `FINALIZED/SUCCESS/Accepted`; reconcile completed and readback showed retries `0 → 1`, state `UNRESOLVED`; this is earlier/unchanged-code evidence, not a Claim 4 row | PASS |
 | Registration form recovery | Final-release register completed with status `Claim #4 is finalized and frozen on-chain.` and no post-write JavaScript error; async form-reference regression is covered by frontend tests | PASS |
 | Desktop scroll/layout | At the reported desktop viewport, scrolling to the claim sheet produced zero measured vertical overlap with the lookup form; the lookup form no longer covers claim results | PASS |
 

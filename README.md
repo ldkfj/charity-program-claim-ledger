@@ -90,7 +90,7 @@ $env:GENVM_VERSION='v0.3.0-rc7'
 genvm-lint check contracts/charity_claim_ledger.py --json
 ```
 
-Current local result: 38 contract behavior tests passed, 30 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The current release is deployed and its live proof matrix is recorded in `docs/DEPLOYMENT.md`.
+Current local result: 38 contract behavior tests passed, 32 frontend tests passed, JavaScript syntax checks passed, and GenVM lint plus semantic validation passed. The current release is deployed and its live proof matrix is recorded in `docs/DEPLOYMENT.md`.
 
 ## Historical pre-remediation deployment
 
