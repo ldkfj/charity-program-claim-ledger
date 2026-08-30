@@ -147,10 +147,9 @@ If Studionet or its chain state resets, the old address and state cannot be reco
 
 - Stable production URL: `https://charity-program-claim-ledger.vercel.app`
 - Vercel team/project: `gam9` / `charity-program-claim-ledger`
-- Exact production deployment observed for the final evidence package: `HZXWcHvJ7AnxEDT8uuNUp4udH6GT`
-- Deployment URL: `https://charity-program-claim-ledger-m6h5wy0vk-gam9.vercel.app`
-- Exact GitHub source commit: `78248bc85178d9135db324a905235fe0e2777d5c`
-- Exact Git tree: `250059f725c9041cb831d4233beb7dde49a98026`
+- Frontend source commit used for live E2E: `78248bc85178d9135db324a905235fe0e2777d5c`
+- Frontend source tree used for live E2E: `250059f725c9041cb831d4233beb7dde49a98026`
+- Evidence-only documentation follow-up is tracked in the GitHub history after that source commit; the exact current Vercel deployment is bound in the final reviewer package from the Vercel dashboard.
 - Release contract: `0x378de5720F632c4F058f5eFe97464b1ED872c6a9`
 - External E2E wallet: OKX Wallet `0x7885536194BbD6E1D0A6Ab991aB215CFa9542339` (not the Studio deployer)
 
