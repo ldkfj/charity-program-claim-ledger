@@ -143,6 +143,30 @@ If Studionet or its chain state resets, the old address and state cannot be reco
 - live proof matrix for register, assess happy path, unresolved path, retry, successor link, and rejected replay/unauthorized actions;
 - frontend reads and writes against the same accepted Studionet contract.
 
+## Current final Vercel E2E evidence
+
+- Stable production URL: `https://charity-program-claim-ledger.vercel.app`
+- Vercel team/project: `gam9` / `charity-program-claim-ledger`
+- Exact production deployment: `56qDUVhctZDY4zqTPST7tYwrYeMW`
+- Deployment URL: `https://charity-program-claim-ledger-m9emv5hgd-gam9.vercel.app`
+- Exact GitHub source commit: `b74c0e07ea4d513f903bed39ec074614baeee5f8`
+- Exact Git tree: `89dafaa6100f6a35a5d8298f6a9bdefebb4d5773`
+- Release contract: `0x378de5720F632c4F058f5eFe97464b1ED872c6a9`
+- External E2E wallet: OKX Wallet `0x7885536194BbD6E1D0A6Ab991aB215CFa9542339` (not the Studio deployer)
+
+| Case | Evidence | Result |
+|---|---|---|
+| Fresh production load/reload | Production deployment was Ready; fresh reload showed `Choose wallet` and `No wallet selected`; the release contract remained preloaded | PASS |
+| Public read without wallet | Claim 2 read from the stable production URL as `FROZEN`, then `UNRESOLVED` after assessment/retry; exact publication and IRS links rendered | PASS |
+| Explicit provider gate | Chooser was opened explicitly, OKX was selected explicitly, and the selected account/network were shown; no automatic wallet selection occurred after reload | PASS |
+| Register claim 3 on final release | `0x510152f538822e5d7305d6871812cd6dc259eb3329edd43ac1b138eb5def94bc`; Explorer `FINALIZED/SUCCESS/Accepted`; authoritative readback returned claim 3 `FROZEN` with the exact registrant and client intent | PASS |
+| Assess claim 2 | `0xb51d5390e249e300f71d3bd21178f02ec2b927ea25536caf71878871835185cb`; Explorer `FINALIZED/SUCCESS/Accepted`; authoritative readback returned `UNRESOLVED` with the unavailable-evidence explanation | PASS |
+| Retry unresolved claim 2 | `0x681467fac7964035f7e79d0ebb113e4ac4ef996a1e7ceaf50855fddb20f4d8c4`; Explorer `FINALIZED/SUCCESS/Accepted`; reconcile completed and readback showed retries `0 → 1`, state `UNRESOLVED` | PASS |
+| Registration form recovery | Final-release register completed with status `Claim #3 is finalized and frozen on-chain.` and no post-write JavaScript error; async form-reference regression is covered by frontend tests | PASS |
+| Desktop scroll/layout | At the reported desktop viewport, scrolling to the claim sheet produced zero measured vertical overlap with the lookup form; the lookup form no longer covers claim results | PASS |
+
+The initial pre-fix registration exposed a frontend-only `event.currentTarget` null error after the successful on-chain write. Commit `4d389fa` preserved the form reference across the async boundary; commit `b74c0e0` additionally removed sticky positioning from the lookup form so readback results remain visible while scrolling. No contract or deployed address changed.
+
 ## Historical pre-remediation production Vercel E2E evidence
 
 - Stable production URL: `https://charity-program-claim-ledger.vercel.app`
